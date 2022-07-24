@@ -33,6 +33,7 @@ fn setup(
             material: mat2d.add(StarfieldMaterial {
                 pos: Vec2::new(0., 0.),
             }),
+            transform: Transform::from_translation(Vec3::new(0., 0., crate::layer::BACKGROUND)),
             ..default()
         })
         .insert(Starfield);

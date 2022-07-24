@@ -112,6 +112,14 @@ fn spawn_player(
                 })
                 .insert(PlayerThruster);
         });
+
+    commands.spawn_bundle(ColorMesh2dBundle {
+        mesh: meshes.add(shape::Circle::new(60.).into()).into(),
+        material: materials.add(Color::AQUAMARINE.into()),
+        transform: Transform::from_rotation(Quat::from_rotation_z(-std::f32::consts::FRAC_PI_2))
+            .with_translation(Vec3::new(0., 0., layer::PLANET)),
+        ..default()
+    });
 }
 
 fn player_input(

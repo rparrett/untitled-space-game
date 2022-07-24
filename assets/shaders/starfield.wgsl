@@ -51,12 +51,12 @@ fn fragment(
     #import bevy_sprite::mesh2d_vertex_output
 ) -> @location(0) vec4<f32> {
     var fragColor: vec4<f32>;
-	var fragCoord = vec2<f32>(f32(world_position.x), f32(world_position.y) );
+	var fragCoord = world_position.xy;
 
 	let maxResolution: f32 = max(1280., 1280.);
 	var finalColor: vec3<f32>;
 	let sCoord: vec2<f32> = fragCoord.xy / maxResolution * 5.;
-	let pos: vec2<f32> = vec2<f32>(material.pos.x / 100., material.pos.y / 100.);
+	let pos: vec2<f32> = vec2<f32>(material.pos.x / 10000., material.pos.y / 10000.);
 
 	for (var i: i32 = 1; i <= 7; i = i + 1) {
 		let fi: f32 = f32(i);
