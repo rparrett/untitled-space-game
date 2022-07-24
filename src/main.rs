@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
+use starfield::StarfieldPlugin;
 
 mod layer;
+mod starfield;
 
 fn main() {
     App::new()
@@ -10,13 +12,14 @@ fn main() {
         // This plugin maps inputs to an input-type agnostic action-state
         // We need to provide it with an enum which stores the possible actions a player could take
         .add_plugin(InputManagerPlugin::<Action>::default())
-        // The InputMap and ActionState components will be added to any entity with the Player component
+        .add_plugin(StarfieldPlugin)
         .add_startup_system(spawn_player)
         // Read the ActionState in your systems using queries!
         .add_system(player_input)
         .add_system(acceleration.before(movement))
         .add_system(movement)
         .add_system(thruster)
+        .add_system(move_camera)
         .run();
 }
 
@@ -58,6 +61,7 @@ fn spawn_player(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     commands.spawn_bundle(Camera2dBundle::default());
+
     commands
         .spawn_bundle(SpatialBundle::default())
         .insert(Player)
@@ -203,4 +207,14 @@ fn thruster(
 
         thruster.is_visible = matches!(status, ThrusterStatus::Forward);
     }
+}
+
+fn move_camera(
+    player_query: Query<&Transform, With<Player>>,
+    mut camera_query: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+) {
+    let player = player_query.single();
+    let mut camera = camera_query.single_mut();
+    camera.translation.x = player.translation.x;
+    camera.translation.y = player.translation.y;
 }
