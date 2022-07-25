@@ -2,6 +2,7 @@
 
 struct StarfieldMaterial {
     pos: vec2<f32>,
+    _wasm_padding: vec2<f32>,
 };
 
 @group(1) @binding(0)

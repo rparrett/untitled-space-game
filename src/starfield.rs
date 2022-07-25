@@ -32,9 +32,7 @@ fn setup(
             mesh: meshes
                 .add(shape::Quad::new(Vec2::new(window.width(), window.height())).into())
                 .into(),
-            material: mat2d.add(StarfieldMaterial {
-                pos: Vec2::new(0., 0.),
-            }),
+            material: mat2d.add(StarfieldMaterial::default()),
             transform: Transform::from_translation(Vec3::new(0., 0., crate::layer::BACKGROUND)),
             ..default()
         })
@@ -66,9 +64,11 @@ impl Material2d for StarfieldMaterial {
 }
 
 // This is the struct that will be passed to your shader
-#[derive(AsBindGroup, TypeUuid, Debug, Clone)]
+#[derive(AsBindGroup, TypeUuid, Debug, Default, Clone)]
 #[uuid = "721097c0-7368-453f-a95f-0731d6724689"]
 pub struct StarfieldMaterial {
     #[uniform(0)]
     pub pos: Vec2,
+    #[uniform(0)]
+    pub _wasm_padding: Vec2,
 }
