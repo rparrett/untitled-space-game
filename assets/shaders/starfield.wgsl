@@ -1,3 +1,5 @@
+#import bevy_sprite::mesh2d_view_bindings
+
 struct StarfieldMaterial {
     pos: vec2<f32>,
 };
@@ -48,26 +50,28 @@ fn starfield(samplePosition: vec2<f32>, threshold: f32) -> vec3<f32> {
 
 @fragment
 fn fragment(
+    @builtin(position) position: vec4<f32>,
     #import bevy_sprite::mesh2d_vertex_output
 ) -> @location(0) vec4<f32> {
-    var fragColor: vec4<f32>;
-	var fragCoord = world_position.xy;
+	var sCoord = position.xy / 500.;
 
-	let maxResolution: f32 = max(1280., 1280.);
 	var finalColor: vec3<f32>;
-	let sCoord: vec2<f32> = fragCoord.xy / maxResolution * 5.;
-	let pos: vec2<f32> = vec2<f32>(material.pos.x / 10000., material.pos.y / 10000.);
+
+    let pos = material.pos / vec2<f32>(-1000., 1000.);
 
 	for (var i: i32 = 1; i <= 7; i = i + 1) {
-		let fi: f32 = f32(i);
-		let inv: f32 = sqrt(1. / fi);
-		finalColor = finalColor + (starfield((sCoord + vec2<f32>(fi * 100., -fi * 50.)) * (1. + fi * 0.2) + pos, 0.0003) * inv);
+		let layer: f32 = f32(i);
+		let inv: f32 = sqrt(1. / layer);
+
+        let layer_offset = vec2<f32>(layer * 100., -layer * 50.);
+
+		finalColor = finalColor + (starfield((sCoord + layer_offset) * (1. + layer * 0.2) - pos * inv, 0.0003) * inv);
 	}
 
     // make stars dim
     finalColor *= 0.4;
 
-	fragColor = vec4<f32>(finalColor, 1.);
+	var fragColor = vec4<f32>(finalColor, 1.);
 
     return fragColor;
 }
