@@ -68,6 +68,24 @@ fn spawn_player(
 ) {
     commands.spawn_bundle(Camera2dBundle::default());
 
+    let mut input_map = InputMap::new([
+        (KeyCode::A, Action::TurnLeft),
+        (KeyCode::Left, Action::TurnLeft),
+        (KeyCode::D, Action::TurnRight),
+        (KeyCode::Right, Action::TurnRight),
+        (KeyCode::W, Action::Forward),
+        (KeyCode::Up, Action::Forward),
+        (KeyCode::S, Action::Reverse),
+        (KeyCode::Down, Action::Reverse),
+    ]);
+
+    input_map.insert_multiple([
+        (GamepadButtonType::DPadLeft, Action::TurnLeft),
+        (GamepadButtonType::DPadRight, Action::TurnRight),
+        (GamepadButtonType::DPadUp, Action::Forward),
+        (GamepadButtonType::DPadDown, Action::Reverse),
+    ]);
+
     commands
         .spawn_bundle(SpatialBundle::default())
         .insert(Player)
@@ -88,16 +106,7 @@ fn spawn_player(
             // Stores "which actions are currently pressed"
             action_state: ActionState::default(),
             // Describes how to convert from player inputs into those actions
-            input_map: InputMap::new([
-                (KeyCode::A, Action::TurnLeft),
-                (KeyCode::Left, Action::TurnLeft),
-                (KeyCode::D, Action::TurnRight),
-                (KeyCode::Right, Action::TurnRight),
-                (KeyCode::W, Action::Forward),
-                (KeyCode::Up, Action::Forward),
-                (KeyCode::S, Action::Reverse),
-                (KeyCode::Down, Action::Reverse),
-            ]),
+            input_map,
         })
         .with_children(|parent| {
             // ship body
