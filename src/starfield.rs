@@ -23,12 +23,14 @@ fn setup(
     mut commands: Commands,
     mut mat2d: ResMut<Assets<StarfieldMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
+    windows: Res<Windows>,
 ) {
-    // TODO size of screen is hardcoded
+    let window = windows.get_primary().unwrap();
+
     commands
         .spawn_bundle(MaterialMesh2dBundle {
             mesh: meshes
-                .add(shape::Quad::new(Vec2::new(1280., 720.)).into())
+                .add(shape::Quad::new(Vec2::new(window.width(), window.height())).into())
                 .into(),
             material: mat2d.add(StarfieldMaterial {
                 pos: Vec2::new(0., 0.),
