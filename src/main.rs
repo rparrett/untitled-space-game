@@ -54,6 +54,8 @@ enum ThrusterStatus {
     Reverse,
     None,
 }
+#[derive(Component)]
+struct MaxVelocity(f32);
 
 fn spawn_player(
     mut commands: Commands,
@@ -73,6 +75,7 @@ fn spawn_player(
         .insert(RotationSpeed(1.))
         .insert(Thrust(50.))
         .insert(ThrusterStatus::None)
+        .insert(MaxVelocity(50.))
         .insert_bundle(InputManagerBundle::<Action> {
             // Stores "which actions are currently pressed"
             action_state: ActionState::default(),
@@ -165,9 +168,12 @@ fn acceleration(
         &Thrust,
         &ThrusterStatus,
         &Rotation,
+        &MaxVelocity,
     )>,
 ) {
-    for (mut velocity, mut acceleration, thrust, thruster_status, rotation) in query.iter_mut() {
+    for (mut velocity, mut acceleration, thrust, thruster_status, rotation, max_velocity) in
+        query.iter_mut()
+    {
         match thruster_status {
             ThrusterStatus::Forward => {
                 let sin_cos = rotation.0.sin_cos();
@@ -185,6 +191,7 @@ fn acceleration(
         }
 
         velocity.0 += acceleration.0 * time.delta_seconds() * thrust.0;
+        velocity.0 = velocity.0.clamp_length_max(max_velocity.0);
     }
 }
 
