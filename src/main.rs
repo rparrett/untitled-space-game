@@ -1,7 +1,9 @@
+use basic_laser::{BasicLaser, BasicLaserPlugin};
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::*;
 use starfield::StarfieldPlugin;
 
+mod basic_laser;
 mod layer;
 mod starfield;
 
@@ -13,11 +15,13 @@ fn main() {
         // We need to provide it with an enum which stores the possible actions a player could take
         .add_plugin(InputManagerPlugin::<Action>::default())
         .add_plugin(StarfieldPlugin)
+        .add_plugin(BasicLaserPlugin)
         .add_startup_system(spawn_player)
         // Read the ActionState in your systems using queries!
         .add_system(player_input)
         .add_system(acceleration.before(movement))
         .add_system(movement)
+        .add_system(rotation)
         .add_system(thruster)
         .add_system(move_camera)
         .run();
@@ -76,6 +80,10 @@ fn spawn_player(
         .insert(Thrust(50.))
         .insert(ThrusterStatus::None)
         .insert(MaxVelocity(50.))
+        .insert(BasicLaser {
+            timer: Timer::from_seconds(1., true),
+            damage: 1.,
+        })
         .insert_bundle(InputManagerBundle::<Action> {
             // Stores "which actions are currently pressed"
             action_state: ActionState::default(),
@@ -195,20 +203,24 @@ fn acceleration(
     }
 }
 
-fn movement(
+fn rotation(
     time: Res<Time>,
     mut query: Query<(
         &mut Transform,
-        &Velocity,
         &AngularVelocity,
         &mut Rotation,
         &RotationSpeed,
     )>,
 ) {
-    for (mut transform, velocity, angular, mut rotation, rotation_speed) in query.iter_mut() {
+    for (mut transform, angular, mut rotation, rotation_speed) in query.iter_mut() {
         rotation.0 += angular.0 * time.delta_seconds() * rotation_speed.0;
 
         transform.rotation = Quat::from_rotation_z(rotation.0);
+    }
+}
+
+fn movement(time: Res<Time>, mut query: Query<(&mut Transform, &Velocity)>) {
+    for (mut transform, velocity) in query.iter_mut() {
         transform.translation += (velocity.0 * time.delta_seconds()).extend(0.);
     }
 }
