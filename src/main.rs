@@ -63,6 +63,11 @@ enum ThrusterStatus {
 }
 #[derive(Component)]
 struct MaxVelocity(f32);
+#[derive(Component)]
+struct Health {
+    current: f32,
+    max: f32,
+}
 
 fn spawn_player(
     mut commands: Commands,

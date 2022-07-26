@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 use rand::{thread_rng, Rng};
 
-use crate::{Player, Velocity};
+use crate::{Health, Player, Velocity};
 
 struct SpawnTimer(Timer);
 #[derive(Component)]
-struct Enemy;
+pub struct Enemy;
 
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
@@ -49,6 +49,10 @@ fn spawn_enemy(
             ..default()
         })
         .insert(Enemy)
+        .insert(Health {
+            current: 5.,
+            max: 5.,
+        })
         .insert(Velocity::default());
 }
 
