@@ -1,11 +1,13 @@
 use basic_laser::{BasicLaser, BasicLaserPlugin};
 use bevy::prelude::*;
+use direction_indicator::{DirectionIndicator, DirectionIndicatorPlugin};
 use enemy::EnemyPlugin;
 use fuel::FuelPlugin;
 use leafwing_input_manager::prelude::*;
 use starfield::StarfieldPlugin;
 
 mod basic_laser;
+mod direction_indicator;
 mod enemy;
 pub mod fuel;
 mod layer;
@@ -23,6 +25,7 @@ fn main() {
         .add_plugin(BasicLaserPlugin)
         .add_plugin(EnemyPlugin)
         .add_plugin(FuelPlugin)
+        .add_plugin(DirectionIndicatorPlugin)
         .add_startup_system(spawn_player)
         // Read the ActionState in your systems using queries!
         .add_system(player_input)
@@ -146,13 +149,30 @@ fn spawn_player(
                 .insert(PlayerThruster);
         });
 
-    commands.spawn_bundle(ColorMesh2dBundle {
-        mesh: meshes.add(shape::Circle::new(60.).into()).into(),
-        material: materials.add(Color::AQUAMARINE.into()),
-        transform: Transform::from_rotation(Quat::from_rotation_z(-std::f32::consts::FRAC_PI_2))
+    let planet = commands
+        .spawn_bundle(ColorMesh2dBundle {
+            mesh: meshes.add(shape::Circle::new(60.).into()).into(),
+            material: materials.add(Color::AQUAMARINE.into()),
+            transform: Transform::from_rotation(Quat::from_rotation_z(
+                -std::f32::consts::FRAC_PI_2,
+            ))
             .with_translation(Vec3::new(0., 0., layer::PLANET)),
-        ..default()
-    });
+            ..default()
+        })
+        .id();
+
+    commands
+        .spawn_bundle(ColorMesh2dBundle {
+            mesh: meshes.add(shape::Circle::new(6.).into()).into(),
+            material: materials.add(Color::PINK.into()),
+            transform: Transform::from_rotation(Quat::from_rotation_z(
+                -std::f32::consts::FRAC_PI_2,
+            ))
+            .with_translation(Vec3::new(0., 0., layer::UI)),
+            visibility: Visibility { is_visible: false },
+            ..default()
+        })
+        .insert(DirectionIndicator { target: planet });
 }
 
 fn player_input(

@@ -1,3 +1,4 @@
+pub const UI: f32 = 20.;
 pub const BULLET: f32 = 11.;
 pub const SHIP: f32 = 10.;
 pub const THRUSTER: f32 = 9.9;
