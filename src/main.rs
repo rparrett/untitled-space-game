@@ -1,9 +1,11 @@
 use basic_laser::{BasicLaser, BasicLaserPlugin};
 use bevy::prelude::*;
+use enemy::EnemyPlugin;
 use leafwing_input_manager::prelude::*;
 use starfield::StarfieldPlugin;
 
 mod basic_laser;
+mod enemy;
 mod layer;
 mod starfield;
 
@@ -16,6 +18,7 @@ fn main() {
         .add_plugin(InputManagerPlugin::<Action>::default())
         .add_plugin(StarfieldPlugin)
         .add_plugin(BasicLaserPlugin)
+        .add_plugin(EnemyPlugin)
         .add_startup_system(spawn_player)
         // Read the ActionState in your systems using queries!
         .add_system(player_input)
