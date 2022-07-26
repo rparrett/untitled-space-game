@@ -1,6 +1,6 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashSet};
 
-use crate::{enemy::Enemy, layer, Velocity};
+use crate::{enemy::Enemy, layer, Health, Velocity};
 
 pub struct BasicLaserPlugin;
 
@@ -18,6 +18,7 @@ pub struct BasicLaser {
 #[derive(Component)]
 struct Bullet {
     damage: f32,
+    piercing: bool,
 }
 #[derive(Component)]
 struct Range(f32);
@@ -47,7 +48,10 @@ fn fire(mut commands: Commands, mut query: Query<(&mut BasicLaser, &Transform)>,
             })
             .insert(Origin(trans.truncate()))
             .insert(Range(200.))
-            .insert(Bullet { damage: gun.damage })
+            .insert(Bullet {
+                damage: gun.damage,
+                piercing: false,
+            })
             .insert(Velocity(
                 rot.mul_vec3(Vec3::new(1., 0., 0.)).truncate() * 100.,
             ));
@@ -57,18 +61,27 @@ fn fire(mut commands: Commands, mut query: Query<(&mut BasicLaser, &Transform)>,
 fn collide(
     mut commands: Commands,
     bullet_query: Query<(Entity, &Transform, &Bullet)>,
-    enemy_query: Query<(Entity, &Transform), With<Enemy>>,
+    mut enemy_query: Query<(&Transform, &mut Health), With<Enemy>>,
 ) {
+    let mut used_bullets = HashSet::new();
+
     for (bullet_entity, bullet_transform, bullet) in bullet_query.iter() {
-        for (enemy_entity, enemy_transform) in enemy_query.iter() {
+        if used_bullets.contains(&bullet_entity) {
+            continue;
+        }
+        for (enemy_transform, mut health) in enemy_query.iter_mut() {
             if enemy_transform
                 .translation
                 .truncate()
                 .distance(bullet_transform.translation.truncate())
                 < 10.
             {
-                commands.entity(bullet_entity).despawn();
-                commands.entity(enemy_entity).despawn();
+                if !bullet.piercing {
+                    used_bullets.insert(bullet_entity);
+                    commands.entity(bullet_entity).despawn();
+                }
+
+                health.current -= bullet.damage;
             }
         }
     }

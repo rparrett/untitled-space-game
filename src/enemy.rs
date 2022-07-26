@@ -17,7 +17,8 @@ impl Plugin for EnemyPlugin {
             .insert_resource(RampUpTimer(Timer::from_seconds(30., true)))
             .add_system(spawn_enemy)
             .add_system(move_enemy)
-            .add_system(ramp_up);
+            .add_system(ramp_up)
+            .add_system(despawn);
     }
 }
 
@@ -83,4 +84,13 @@ fn ramp_up(time: Res<Time>, mut spawn: ResMut<SpawnTimer>, mut ramp: ResMut<Ramp
 
     let new = (spawn.0.duration().as_secs_f32() / 2.).max(0.4);
     spawn.0.set_duration(Duration::from_secs_f32(new));
+}
+
+fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Enemy>>) {
+    for (entity, health) in query.iter() {
+        if health.current < health.max {
+            commands.entity(entity).despawn();
+            continue;
+        }
+    }
 }
