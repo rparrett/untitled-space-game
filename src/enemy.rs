@@ -3,7 +3,7 @@ use std::time::Duration;
 use bevy::prelude::*;
 use rand::{thread_rng, Rng};
 
-use crate::{fuel::SpawnFuelPelletEvent, Health, MaxVelocity, Player, Velocity};
+use crate::{fuel::SpawnFuelPelletEvent, util, Health, MaxVelocity, Player, Velocity};
 
 struct RampUpTimer(Timer);
 struct SpawnTimer(Timer);
@@ -40,9 +40,9 @@ fn spawn_enemy(
 
     let theta = thread_rng().gen_range(0.0..std::f32::consts::TAU);
 
-    let pos = (Vec2::from_angle(theta) * spawn_bounds.max_element())
-        .clamp(-spawn_bounds, spawn_bounds)
-        + player.translation.truncate();
+    let pos =
+        util::project_onto_bounding_rectangle(Vec2::from_angle(theta), -spawn_bounds, spawn_bounds)
+            + player.translation.truncate();
 
     commands
         .spawn_bundle(SpriteBundle {

@@ -10,6 +10,7 @@ mod enemy;
 pub mod fuel;
 mod layer;
 mod starfield;
+mod util;
 
 fn main() {
     App::new()
