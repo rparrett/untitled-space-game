@@ -5,6 +5,7 @@ use enemy::EnemyPlugin;
 use fuel::FuelPlugin;
 use leafwing_input_manager::prelude::*;
 use starfield::StarfieldPlugin;
+use ui::UiPlugin;
 
 mod basic_laser;
 mod direction_indicator;
@@ -12,6 +13,7 @@ mod enemy;
 pub mod fuel;
 mod layer;
 mod starfield;
+mod ui;
 mod util;
 
 fn main() {
@@ -26,6 +28,7 @@ fn main() {
         .add_plugin(EnemyPlugin)
         .add_plugin(FuelPlugin)
         .add_plugin(DirectionIndicatorPlugin)
+        .add_plugin(UiPlugin)
         .add_startup_system(spawn_player)
         // Read the ActionState in your systems using queries!
         .add_system(player_input)
@@ -76,6 +79,11 @@ struct Health {
     current: f32,
     max: f32,
 }
+#[derive(Component)]
+struct FuelTank {
+    current: u32,
+    max: u32,
+}
 
 fn spawn_player(
     mut commands: Commands,
@@ -114,6 +122,10 @@ fn spawn_player(
         .insert(Thrust(50.))
         .insert(ThrusterStatus::None)
         .insert(MaxVelocity(50.))
+        .insert(FuelTank {
+            current: 0,
+            max: 50,
+        })
         .insert(BasicLaser {
             timer: Timer::from_seconds(1., true),
             damage: 1.,

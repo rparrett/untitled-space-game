@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{layer, Acceleration, MaxVelocity, Player, Velocity};
+use crate::{layer, Acceleration, FuelTank, MaxVelocity, Player, Velocity};
 
 pub struct FuelPlugin;
 impl Plugin for FuelPlugin {
@@ -48,10 +48,10 @@ fn spawn(
 
 fn movement(
     mut commands: Commands,
-    player_query: Query<&Transform, With<Player>>,
+    mut player_query: Query<(&Transform, &mut FuelTank), With<Player>>,
     mut query: Query<(Entity, &mut Velocity, &Transform), With<FuelPellet>>,
 ) {
-    let player = player_query.single();
+    let (player, mut fuel_tank) = player_query.single_mut();
 
     for (entity, mut acceleration, transform) in query.iter_mut() {
         let diff = player.translation.truncate() - transform.translation.truncate();
@@ -67,6 +67,7 @@ fn movement(
 
         // TODO Player should have a collider for this
         if dist <= 10. {
+            fuel_tank.current = (fuel_tank.current + 1).min(fuel_tank.max);
             commands.entity(entity).despawn();
         }
     }
