@@ -1,11 +1,13 @@
 use basic_laser::{BasicLaser, BasicLaserPlugin};
 use bevy::prelude::*;
 use enemy::EnemyPlugin;
+use fuel::FuelPlugin;
 use leafwing_input_manager::prelude::*;
 use starfield::StarfieldPlugin;
 
 mod basic_laser;
 mod enemy;
+pub mod fuel;
 mod layer;
 mod starfield;
 
@@ -19,10 +21,12 @@ fn main() {
         .add_plugin(StarfieldPlugin)
         .add_plugin(BasicLaserPlugin)
         .add_plugin(EnemyPlugin)
+        .add_plugin(FuelPlugin)
         .add_startup_system(spawn_player)
         // Read the ActionState in your systems using queries!
         .add_system(player_input)
-        .add_system(acceleration.before(movement))
+        .add_system(acceleration.before(movement).before(apply_acceleration))
+        .add_system(apply_acceleration)
         .add_system(movement)
         .add_system(rotation)
         .add_system(thruster)
@@ -185,20 +189,8 @@ fn player_input(
     }
 }
 
-fn acceleration(
-    time: Res<Time>,
-    mut query: Query<(
-        &mut Velocity,
-        &mut Acceleration,
-        &Thrust,
-        &ThrusterStatus,
-        &Rotation,
-        &MaxVelocity,
-    )>,
-) {
-    for (mut velocity, mut acceleration, thrust, thruster_status, rotation, max_velocity) in
-        query.iter_mut()
-    {
+fn acceleration(mut query: Query<(&mut Acceleration, &Thrust, &ThrusterStatus, &Rotation)>) {
+    for (mut acceleration, thrust, thruster_status, rotation) in query.iter_mut() {
         match thruster_status {
             ThrusterStatus::Forward => {
                 let sin_cos = rotation.0.sin_cos();
@@ -215,7 +207,16 @@ fn acceleration(
             }
         }
 
-        velocity.0 += acceleration.0 * time.delta_seconds() * thrust.0;
+        acceleration.0 *= thrust.0;
+    }
+}
+
+fn apply_acceleration(
+    time: Res<Time>,
+    mut query: Query<(&mut Velocity, &Acceleration, &MaxVelocity)>,
+) {
+    for (mut velocity, acceleration, max_velocity) in query.iter_mut() {
+        velocity.0 += acceleration.0 * time.delta_seconds();
         velocity.0 = velocity.0.clamp_length_max(max_velocity.0);
     }
 }

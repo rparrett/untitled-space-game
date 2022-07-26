@@ -3,7 +3,7 @@ use std::time::Duration;
 use bevy::prelude::*;
 use rand::{thread_rng, Rng};
 
-use crate::{Health, MaxVelocity, Player, Velocity};
+use crate::{fuel::SpawnFuelPelletEvent, Health, MaxVelocity, Player, Velocity};
 
 struct RampUpTimer(Timer);
 struct SpawnTimer(Timer);
@@ -86,10 +86,17 @@ fn ramp_up(time: Res<Time>, mut spawn: ResMut<SpawnTimer>, mut ramp: ResMut<Ramp
     spawn.0.set_duration(Duration::from_secs_f32(new));
 }
 
-fn despawn(mut commands: Commands, query: Query<(Entity, &Health), With<Enemy>>) {
-    for (entity, health) in query.iter() {
+fn despawn(
+    mut commands: Commands,
+    query: Query<(Entity, &Health, &Transform), With<Enemy>>,
+    mut events: EventWriter<SpawnFuelPelletEvent>,
+) {
+    for (entity, health, transform) in query.iter() {
         if health.current < health.max {
             commands.entity(entity).despawn();
+            events.send(SpawnFuelPelletEvent {
+                location: transform.translation.truncate(),
+            });
             continue;
         }
     }
