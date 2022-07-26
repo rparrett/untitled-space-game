@@ -26,12 +26,12 @@ fn main() {
         .add_startup_system(spawn_player)
         // Read the ActionState in your systems using queries!
         .add_system(player_input)
-        .add_system(acceleration.before(movement).before(apply_acceleration))
-        .add_system(apply_acceleration)
+        .add_system(thruster.before(acceleration))
+        .add_system(acceleration.before(apply_acceleration))
+        .add_system(apply_acceleration.before(movement))
+        .add_system(rotation.before(movement))
         .add_system(movement)
-        .add_system(rotation)
-        .add_system(thruster)
-        .add_system(move_camera)
+        .add_system(move_camera.after(movement))
         .run();
 }
 
