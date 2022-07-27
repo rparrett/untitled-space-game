@@ -1,5 +1,6 @@
 use basic_laser::{BasicLaser, BasicLaserPlugin};
 use bevy::prelude::*;
+use commodity::{CommodityInventory, CommodityPlugin};
 use direction_indicator::{DirectionIndicator, DirectionIndicatorPlugin};
 use enemy::EnemyPlugin;
 use fuel::FuelPlugin;
@@ -8,6 +9,7 @@ use starfield::StarfieldPlugin;
 use ui::UiPlugin;
 
 mod basic_laser;
+mod commodity;
 mod direction_indicator;
 mod enemy;
 pub mod fuel;
@@ -28,6 +30,7 @@ fn main() {
         .add_plugin(EnemyPlugin)
         .add_plugin(FuelPlugin)
         .add_plugin(DirectionIndicatorPlugin)
+        .add_plugin(CommodityPlugin)
         .add_plugin(UiPlugin)
         .add_startup_system(spawn_player)
         // Read the ActionState in your systems using queries!
@@ -130,6 +133,7 @@ fn spawn_player(
             timer: Timer::from_seconds(1., true),
             damage: 1.,
         })
+        .insert(CommodityInventory::default())
         .insert_bundle(InputManagerBundle::<Action> {
             // Stores "which actions are currently pressed"
             action_state: ActionState::default(),

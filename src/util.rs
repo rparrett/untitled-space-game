@@ -3,6 +3,7 @@ use bevy::{
     prelude::Mesh,
     render::mesh::{Indices, PrimitiveTopology},
 };
+use rand::{thread_rng, Rng};
 
 /// Given a direction vector and the minimum and maximum bounds of a rectangle,
 /// project a ray from 0, 0 and return the intersection with that rectangle.
@@ -90,4 +91,24 @@ pub fn chevron(width: f32, height: f32, thickness: f32) -> Mesh {
     mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
     mesh.set_indices(Some(Indices::U32(indices)));
     mesh
+}
+
+pub fn random_u32_subdivisions(num: u32, total: u32, min: u32) -> Vec<u32> {
+    debug_assert!(total > num * min);
+
+    let mut rng = thread_rng();
+
+    let mut vals = Vec::with_capacity(num as usize);
+    let mut sum = 0;
+
+    for i in 0..(num - 1) {
+        let max = total - sum - min * (num - i - 1);
+        let val = rng.gen_range(min..max);
+        vals.push(val);
+        sum += val;
+    }
+
+    vals.push(total - sum);
+
+    vals
 }
