@@ -76,12 +76,13 @@ fn collide(
                 .distance(bullet_transform.translation.truncate())
                 < 10.
             {
+                health.current -= bullet.damage;
+
                 if !bullet.piercing {
                     used_bullets.insert(bullet_entity);
                     commands.entity(bullet_entity).despawn();
+                    break;
                 }
-
-                health.current -= bullet.damage;
             }
         }
     }
