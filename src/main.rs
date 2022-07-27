@@ -165,22 +165,16 @@ fn spawn_player(
         .spawn_bundle(ColorMesh2dBundle {
             mesh: meshes.add(shape::Circle::new(60.).into()).into(),
             material: materials.add(Color::AQUAMARINE.into()),
-            transform: Transform::from_rotation(Quat::from_rotation_z(
-                -std::f32::consts::FRAC_PI_2,
-            ))
-            .with_translation(Vec3::new(0., 0., layer::PLANET)),
+            transform: Transform::from_xyz(0., 0., layer::PLANET),
             ..default()
         })
         .id();
 
     commands
         .spawn_bundle(ColorMesh2dBundle {
-            mesh: meshes.add(shape::Circle::new(6.).into()).into(),
-            material: materials.add(Color::PINK.into()),
-            transform: Transform::from_rotation(Quat::from_rotation_z(
-                -std::f32::consts::FRAC_PI_2,
-            ))
-            .with_translation(Vec3::new(0., 0., layer::UI)),
+            mesh: meshes.add(util::chevron(20., 20., 8.).into()).into(),
+            material: materials.add(Color::AQUAMARINE.into()),
+            transform: Transform::from_xyz(0., 0., layer::UI),
             visibility: Visibility { is_visible: false },
             ..default()
         })

@@ -22,7 +22,7 @@ fn update(
     let player = player_query.single();
     let player_transform = transform_query.get(player).unwrap();
 
-    let indicator_rect = Vec2::new(630., 350.);
+    let indicator_rect = Vec2::new(625., 345.);
     let on_screen_rect = Vec2::new(640., 360.);
 
     for (indicator, mut transform, mut visibility) in query.iter_mut() {
@@ -41,6 +41,9 @@ fn update(
 
                 transform.translation.x = pos.x;
                 transform.translation.y = pos.y;
+
+                transform.rotation =
+                    Quat::from_rotation_z(diff.y.atan2(diff.x) + std::f32::consts::FRAC_PI_2);
 
                 visibility.is_visible = true;
             } else {

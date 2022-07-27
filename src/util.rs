@@ -1,4 +1,8 @@
-use bevy::math::Vec2;
+use bevy::{
+    math::Vec2,
+    prelude::Mesh,
+    render::mesh::{Indices, PrimitiveTopology},
+};
 
 /// Given a direction vector and the minimum and maximum bounds of a rectangle,
 /// project a ray from 0, 0 and return the intersection with that rectangle.
@@ -39,4 +43,51 @@ pub fn project_onto_bounding_rectangle(dir: Vec2, min: Vec2, max: Vec2) -> Vec2 
 
 pub fn point_in_rect(point: Vec2, min: Vec2, max: Vec2) -> bool {
     point.x < min.x || point.x > max.x || point.y < min.y || point.y > max.y
+}
+
+pub fn chevron(width: f32, height: f32, thickness: f32) -> Mesh {
+    let half_width = width / 2.;
+    let half_height = height / 2.;
+
+    let positions = vec![
+        [0., -half_height, 0.],
+        [half_width, half_height - thickness, 0.],
+        [half_width, half_height, 0.],
+        [0., -half_height + thickness, 0.],
+        [-half_width, half_height, 0.],
+        [-half_width, half_height - thickness, 0.],
+    ];
+
+    let normals = vec![
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+        [0.0, 0.0, 1.0],
+    ];
+
+    let mut uvs = Vec::with_capacity(positions.len());
+
+    for pos in positions.iter() {
+        uvs.push([
+            (pos[0] + half_width / width),
+            (pos[0] + half_height / height),
+        ])
+    }
+
+    let indices = vec![
+        1, 3, 0, //
+        2, 3, 1, //
+        3, 1, 2, //
+        5, 0, 3, //
+        4, 5, 3, //
+    ];
+
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    mesh.set_indices(Some(Indices::U32(indices)));
+    mesh
 }
