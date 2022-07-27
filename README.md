@@ -15,3 +15,5 @@ Possibly, planetary systems buy and sell commodities, and you must trade for max
 Chevron is displayed around edges of screen to indicate position of planet. (or, minimap)
 
 Some sort of loot is placed randomly throughout the level to encourage exploration.
+
+After warping into a planetary system, your scanners will start working. They will reveal the commodities in the sector one by one, and then finally the other planetary systems that can be warped to.
