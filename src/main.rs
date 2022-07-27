@@ -170,15 +170,10 @@ fn spawn_player(
         })
         .id();
 
-    commands
-        .spawn_bundle(ColorMesh2dBundle {
-            mesh: meshes.add(util::chevron(20., 20., 8.).into()).into(),
-            material: materials.add(Color::AQUAMARINE.into()),
-            transform: Transform::from_xyz(0., 0., layer::UI),
-            visibility: Visibility { is_visible: false },
-            ..default()
-        })
-        .insert(DirectionIndicator { target: planet });
+    commands.spawn().insert(DirectionIndicator {
+        target: planet,
+        color: Color::AQUAMARINE,
+    });
 }
 
 fn player_input(

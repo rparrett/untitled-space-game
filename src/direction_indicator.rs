@@ -1,17 +1,19 @@
 use bevy::prelude::*;
 
-use crate::{util, Player};
+use crate::{layer, util, Player};
 
 pub struct DirectionIndicatorPlugin;
 impl Plugin for DirectionIndicatorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(update);
+        app.add_system(update.after(crate::movement))
+            .add_system(decorate);
     }
 }
 
 #[derive(Component)]
 pub struct DirectionIndicator {
     pub target: Entity,
+    pub color: Color,
 }
 
 fn update(
@@ -50,5 +52,22 @@ fn update(
                 visibility.is_visible = false;
             }
         }
+    }
+}
+
+fn decorate(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    query: Query<(Entity, &DirectionIndicator), Added<DirectionIndicator>>,
+) {
+    for (entity, indicator) in query.iter() {
+        commands.entity(entity).insert_bundle(ColorMesh2dBundle {
+            mesh: meshes.add(util::chevron(20., 20., 8.).into()).into(),
+            material: materials.add(indicator.color.into()),
+            transform: Transform::from_xyz(0., 0., layer::UI),
+            visibility: Visibility { is_visible: false },
+            ..default()
+        });
     }
 }
