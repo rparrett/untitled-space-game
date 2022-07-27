@@ -82,7 +82,7 @@ fn ramp_up(time: Res<Time>, mut spawn: ResMut<SpawnTimer>, mut ramp: ResMut<Ramp
         return;
     }
 
-    let new = (spawn.0.duration().as_secs_f32() / 2.).max(0.4);
+    let new = (spawn.0.duration().as_secs_f32() / 1.8).max(0.4);
     spawn.0.set_duration(Duration::from_secs_f32(new));
 }
 
