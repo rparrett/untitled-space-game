@@ -1,5 +1,5 @@
 use basic_laser::{BasicLaser, BasicLaserPlugin};
-use bevy::prelude::*;
+use bevy::{asset::AssetServerSettings, prelude::*};
 use commodity::{CommodityInventory, CommodityPlugin};
 use direction_indicator::{DirectionIndicator, DirectionIndicatorPlugin};
 use enemy::EnemyPlugin;
@@ -25,6 +25,10 @@ mod warp_node;
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
+        .insert_resource(AssetServerSettings {
+            watch_for_changes: true,
+            ..default()
+        })
         .add_plugins(DefaultPlugins)
         // This plugin maps inputs to an input-type agnostic action-state
         // We need to provide it with an enum which stores the possible actions a player could take
