@@ -37,9 +37,6 @@ fn update(
 
             // TODO this should be a proper collision with the object geometry and the screen.
             if util::point_in_rect(diff, -on_screen_rect, on_screen_rect) {
-                let diff = target_transform.translation.truncate()
-                    - player_transform.translation.truncate();
-
                 let pos =
                     util::project_onto_bounding_rectangle(diff, -indicator_rect, indicator_rect)
                         + player_transform.translation.truncate();
