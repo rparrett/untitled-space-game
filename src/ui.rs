@@ -113,13 +113,11 @@ fn update_commodity_inventory(
 }
 
 fn update_scanner(scanner: Res<Scanner>, mut query: Query<&mut Text, With<ScannerLabel>>) {
-    if !scanner.is_changed() {
-        return;
-    }
-
     for mut text in query.iter_mut() {
         if !scanner.timer.paused() {
-            text.sections[0].value = "Scanning...".to_string();
+            let pct = scanner.timer.percent() * 100.;
+
+            text.sections[0].value = format!("Scanning {:.0}%", pct);
         } else {
             text.sections[0].value = "".to_string();
         }
