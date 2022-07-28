@@ -106,7 +106,7 @@ fn update_commodity_inventory(
             label.sections[0].value = inventory
                 .0
                 .iter()
-                .map(|(k, v)| format!("{:?}: {}\n", k, v))
+                .map(|(k, v)| format!("{:?} {}\n", k, v))
                 .collect::<String>()
         }
     }
