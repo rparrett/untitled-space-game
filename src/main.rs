@@ -1,7 +1,9 @@
 use basic_laser::{BasicLaser, BasicLaserPlugin};
 use bevy::{asset::AssetServerSettings, prelude::*};
 use commodity::{CommodityInventory, CommodityPlugin};
-use direction_indicator::{DirectionIndicator, DirectionIndicatorPlugin};
+use direction_indicator::{
+    DirectionIndicator, DirectionIndicatorPlugin, DirectionIndicatorSettings,
+};
 use enemy::EnemyPlugin;
 use fuel::FuelPlugin;
 use leafwing_input_manager::prelude::*;
@@ -186,7 +188,10 @@ fn spawn_player(
 
     commands.spawn().insert(DirectionIndicator {
         target: planet,
-        color: Color::AQUAMARINE,
+        settings: DirectionIndicatorSettings {
+            color: Color::AQUAMARINE,
+            label: None,
+        },
     });
 }
 

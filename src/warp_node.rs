@@ -3,7 +3,7 @@ use itertools::izip;
 use rand::{thread_rng, Rng};
 
 use crate::{
-    commodity::Commodity, direction_indicator::DirectionIndicatorColor, layer, scanner::Scanner,
+    commodity::Commodity, direction_indicator::DirectionIndicatorSettings, layer, scanner::Scanner,
 };
 
 pub struct WarpNodePlugin;
@@ -38,7 +38,9 @@ fn setup(
         rng.gen_range(dist_range.clone()),
     ];
 
-    for (base_angle, distance) in izip!(base_angles, distances) {
+    let labels = ["A".to_string(), "B".to_string(), "C".to_string()];
+
+    for (base_angle, distance, label) in izip!(base_angles, distances, labels) {
         let angle = base_angle + offset + rng.gen_range(angular_variance_range.clone());
 
         let pos = Vec3::new(
@@ -63,7 +65,10 @@ fn setup(
                 ..default()
             })
             .insert(WarpNode)
-            .insert(DirectionIndicatorColor(Color::ORANGE))
+            .insert(DirectionIndicatorSettings {
+                color: Color::ORANGE,
+                label: Some(label),
+            })
             .id();
 
         scanner.warp_nodes.push_back(entity);

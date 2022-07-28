@@ -4,7 +4,9 @@ use rand::{seq::IteratorRandom, thread_rng, Rng};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::{direction_indicator::DirectionIndicatorColor, layer, scanner::Scanner, util, Player};
+use crate::{
+    direction_indicator::DirectionIndicatorSettings, layer, scanner::Scanner, util, Player,
+};
 
 #[derive(EnumIter, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum CommodityKind {
@@ -77,7 +79,10 @@ pub fn setup(
                 ..default()
             })
             .insert(Commodity { kind, amount })
-            .insert(DirectionIndicatorColor(Color::BEIGE))
+            .insert(DirectionIndicatorSettings {
+                color: Color::BEIGE,
+                label: None,
+            })
             .id();
 
         scanner.commodities.push_back(entity);

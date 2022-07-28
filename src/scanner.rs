@@ -2,13 +2,13 @@ use std::collections::VecDeque;
 
 use bevy::prelude::*;
 
-use crate::direction_indicator::{DirectionIndicator, DirectionIndicatorColor};
+use crate::direction_indicator::{DirectionIndicator, DirectionIndicatorSettings};
 
 pub struct ScannerPlugin;
 impl Plugin for ScannerPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Scanner {
-            timer: Timer::from_seconds(60., true), // XXX
+            timer: Timer::from_seconds(60., true),
             commodities: VecDeque::new(),
             warp_nodes: VecDeque::new(),
         })
@@ -26,7 +26,7 @@ fn update(
     mut commands: Commands,
     time: Res<Time>,
     mut scanner: ResMut<Scanner>,
-    target_query: Query<&DirectionIndicatorColor>,
+    target_query: Query<&DirectionIndicatorSettings>,
 ) {
     scanner.timer.tick(time.delta());
     if !scanner.timer.just_finished() {
@@ -44,10 +44,10 @@ fn update(
     // before it was revealed by the scanner.
 
     while let Some(entity) = entities.pop_front() {
-        if let Ok(color) = target_query.get(entity) {
+        if let Ok(settings) = target_query.get(entity) {
             commands.spawn().insert(DirectionIndicator {
                 target: entity,
-                color: color.0,
+                settings: (*settings).clone(),
             });
             break;
         }

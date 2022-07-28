@@ -42,6 +42,8 @@ fn spawn_enemy(
 
     let pos =
         util::project_onto_bounding_rectangle(Vec2::from_angle(theta), -spawn_bounds, spawn_bounds)
+            .unwrap()
+            .0
             + player.translation.truncate();
 
     commands
