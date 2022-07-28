@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{commodity::CommodityInventory, FuelTank, Player};
+use crate::{commodity::CommodityInventory, scanner::Scanner, FuelTank, Player};
 
 pub struct UiPlugin;
 
@@ -8,14 +8,17 @@ impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup)
             .add_system(update_fuel)
-            .add_system(update_commodity_inventory);
+            .add_system(update_commodity_inventory)
+            .add_system(update_scanner);
     }
 }
 
 #[derive(Component)]
-pub struct FuelLabel;
+struct FuelLabel;
 #[derive(Component)]
-pub struct CommodityInventoryLabel;
+struct CommodityInventoryLabel;
+#[derive(Component)]
+struct ScannerLabel;
 
 fn setup(mut commands: Commands, assets: Res<AssetServer>) {
     let container = commands
@@ -56,13 +59,31 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
                     color: Color::BEIGE,
                 },
             )
-            .with_alignment(TextAlignment::TOP_RIGHT),
+            .with_alignment(TextAlignment::CENTER_RIGHT),
             ..default()
         })
         .insert(CommodityInventoryLabel)
         .id();
 
-    commands.entity(container).push_children(&[fuel, comm]);
+    let scanner = commands
+        .spawn_bundle(TextBundle {
+            text: Text::from_section(
+                "",
+                TextStyle {
+                    font: assets.load("fonts/Orbitron-Medium.ttf"),
+                    font_size: 20.,
+                    color: Color::BEIGE,
+                },
+            )
+            .with_alignment(TextAlignment::CENTER_RIGHT),
+            ..default()
+        })
+        .insert(ScannerLabel)
+        .id();
+
+    commands
+        .entity(container)
+        .push_children(&[fuel, comm, scanner]);
 }
 
 fn update_fuel(
@@ -87,6 +108,20 @@ fn update_commodity_inventory(
                 .iter()
                 .map(|(k, v)| format!("{:?}: {}\n", k, v))
                 .collect::<String>()
+        }
+    }
+}
+
+fn update_scanner(scanner: Res<Scanner>, mut query: Query<&mut Text, With<ScannerLabel>>) {
+    if !scanner.is_changed() {
+        return;
+    }
+
+    for mut text in query.iter_mut() {
+        if scanner.entities.is_empty() {
+            text.sections[0].value = "".to_string();
+        } else {
+            text.sections[0].value = "Scanning...".to_string();
         }
     }
 }

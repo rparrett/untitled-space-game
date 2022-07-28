@@ -5,6 +5,7 @@ use direction_indicator::{DirectionIndicator, DirectionIndicatorPlugin};
 use enemy::EnemyPlugin;
 use fuel::FuelPlugin;
 use leafwing_input_manager::prelude::*;
+use scanner::ScannerPlugin;
 use starfield::StarfieldPlugin;
 use ui::UiPlugin;
 
@@ -14,6 +15,7 @@ mod direction_indicator;
 mod enemy;
 pub mod fuel;
 mod layer;
+mod scanner;
 mod starfield;
 mod ui;
 mod util;
@@ -31,6 +33,7 @@ fn main() {
         .add_plugin(FuelPlugin)
         .add_plugin(DirectionIndicatorPlugin)
         .add_plugin(CommodityPlugin)
+        .add_plugin(ScannerPlugin)
         .add_plugin(UiPlugin)
         .add_startup_system(spawn_player)
         // Read the ActionState in your systems using queries!

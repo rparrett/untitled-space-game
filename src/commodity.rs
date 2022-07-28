@@ -4,7 +4,7 @@ use rand::{seq::IteratorRandom, thread_rng, Rng};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::{direction_indicator::DirectionIndicator, layer, util, Player};
+use crate::{direction_indicator::DirectionIndicatorColor, layer, scanner::Scanner, util, Player};
 
 #[derive(EnumIter, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum CommodityKind {
@@ -39,6 +39,7 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut scanner: ResMut<Scanner>,
 ) {
     let mut rng = thread_rng();
 
@@ -76,12 +77,10 @@ fn setup(
                 ..default()
             })
             .insert(Commodity { kind, amount })
+            .insert(DirectionIndicatorColor(Color::BEIGE))
             .id();
 
-        commands.spawn().insert(DirectionIndicator {
-            target: entity,
-            color: Color::BEIGE,
-        });
+        scanner.entities.push_back(entity);
     }
 }
 

@@ -16,6 +16,9 @@ pub struct DirectionIndicator {
     pub color: Color,
 }
 
+#[derive(Component)]
+pub struct DirectionIndicatorColor(pub Color);
+
 fn update(
     mut query: Query<(&DirectionIndicator, &mut Transform, &mut Visibility)>,
     transform_query: Query<&Transform, Without<DirectionIndicator>>,
