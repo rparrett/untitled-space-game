@@ -54,25 +54,26 @@ fn fragment(
     @builtin(position) position: vec4<f32>,
     #import bevy_sprite::mesh2d_vertex_output
 ) -> @location(0) vec4<f32> {
-	var sCoord = position.xy / 500.;
-
 	var finalColor: vec3<f32>;
 
     let pos = material.pos / vec2<f32>(-1000., 1000.);
+    let threshold = 0.0003;
 
 	for (var i: i32 = 1; i <= 7; i = i + 1) {
 		let layer: f32 = f32(i);
 		let inv: f32 = sqrt(1. / layer);
 
         let layer_offset = vec2<f32>(layer * 100., -layer * 50.);
+        let layer_zoom = (1. + layer * 0.6) / 500.;
+        let layer_speed = inv;
+        let layer_brightness = inv * 0.4;
 
-		finalColor = finalColor + (starfield((sCoord + layer_offset) * (1. + layer * 0.2) - pos * inv, 0.0003) * inv);
+        let starfield_coords = (position.xy + layer_offset) * layer_zoom - pos * layer_speed;
+
+		finalColor = finalColor + (starfield(starfield_coords, threshold) * layer_brightness);
 	}
 
-    // make stars dim
-    finalColor *= 0.4;
-
-	var fragColor = vec4<f32>(finalColor, 1.);
+	let fragColor = vec4<f32>(finalColor, 1.);
 
     return fragColor;
 }
