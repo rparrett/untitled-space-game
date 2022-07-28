@@ -8,8 +8,9 @@ pub struct ScannerPlugin;
 impl Plugin for ScannerPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Scanner {
-            timer: Timer::from_seconds(60., true),
-            entities: VecDeque::new(),
+            timer: Timer::from_seconds(60., true), // XXX
+            commodities: VecDeque::new(),
+            warp_nodes: VecDeque::new(),
         })
         .add_system(update);
     }
@@ -17,7 +18,8 @@ impl Plugin for ScannerPlugin {
 
 pub struct Scanner {
     pub timer: Timer,
-    pub entities: VecDeque<Entity>,
+    pub commodities: VecDeque<Entity>,
+    pub warp_nodes: VecDeque<Entity>,
 }
 
 fn update(
@@ -31,15 +33,29 @@ fn update(
         return;
     }
 
-    if let Some(entity) = scanner.entities.pop_front() {
+    let entities = if !scanner.commodities.is_empty() {
+        &mut scanner.commodities
+    } else {
+        &mut scanner.warp_nodes
+    };
+
+    // Insert a DirectionIndicator for the first entity that still
+    // exists. The player may have already collected the commodity
+    // before it was revealed by the scanner.
+
+    while let Some(entity) = entities.pop_front() {
         if let Ok(color) = target_query.get(entity) {
             commands.spawn().insert(DirectionIndicator {
                 target: entity,
                 color: color.0,
             });
+            break;
         }
-    } else {
+    }
+
+    if entities.len() == 0 {
         scanner.timer.pause();
         scanner.timer.reset();
+        return;
     }
 }

@@ -8,6 +8,7 @@ use leafwing_input_manager::prelude::*;
 use scanner::ScannerPlugin;
 use starfield::StarfieldPlugin;
 use ui::UiPlugin;
+use warp_node::WarpNodePlugin;
 
 mod basic_laser;
 mod commodity;
@@ -19,6 +20,7 @@ mod scanner;
 mod starfield;
 mod ui;
 mod util;
+mod warp_node;
 
 fn main() {
     App::new()
@@ -34,6 +36,7 @@ fn main() {
         .add_plugin(DirectionIndicatorPlugin)
         .add_plugin(CommodityPlugin)
         .add_plugin(ScannerPlugin)
+        .add_plugin(WarpNodePlugin)
         .add_plugin(UiPlugin)
         .add_startup_system(spawn_player)
         // Read the ActionState in your systems using queries!

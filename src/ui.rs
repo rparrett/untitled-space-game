@@ -118,10 +118,10 @@ fn update_scanner(scanner: Res<Scanner>, mut query: Query<&mut Text, With<Scanne
     }
 
     for mut text in query.iter_mut() {
-        if scanner.entities.is_empty() {
-            text.sections[0].value = "".to_string();
-        } else {
+        if !scanner.timer.paused() {
             text.sections[0].value = "Scanning...".to_string();
+        } else {
+            text.sections[0].value = "".to_string();
         }
     }
 }

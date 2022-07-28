@@ -35,7 +35,7 @@ impl Plugin for CommodityPlugin {
     }
 }
 
-fn setup(
+pub fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -80,7 +80,7 @@ fn setup(
             .insert(DirectionIndicatorColor(Color::BEIGE))
             .id();
 
-        scanner.entities.push_back(entity);
+        scanner.commodities.push_back(entity);
     }
 }
 
