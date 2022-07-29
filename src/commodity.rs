@@ -100,7 +100,7 @@ fn pickup(
             .translation
             .truncate()
             .distance(player_transform.translation.truncate())
-            < 15.
+            < 20.
         {
             inventory
                 .0

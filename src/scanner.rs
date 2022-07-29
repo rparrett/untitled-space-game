@@ -8,7 +8,7 @@ pub struct ScannerPlugin;
 impl Plugin for ScannerPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Scanner {
-            timer: Timer::from_seconds(60., true),
+            timer: Timer::from_seconds(45., true),
             commodities: VecDeque::new(),
             warp_nodes: VecDeque::new(),
         })
