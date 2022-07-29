@@ -26,13 +26,14 @@ pub struct Scanner {
     pub warp_nodes: VecDeque<Entity>,
 }
 
-fn update(
+pub fn update(
     mut commands: Commands,
     time: Res<Time>,
     mut scanner: ResMut<Scanner>,
     target_query: Query<&DirectionIndicatorSettings>,
 ) {
     scanner.timer.tick(time.delta());
+
     if !scanner.timer.just_finished() {
         return;
     }
@@ -58,7 +59,6 @@ fn update(
     }
 
     if entities.len() == 0 {
-        scanner.timer.pause();
         scanner.timer.reset();
         scanner.timer.pause();
     }

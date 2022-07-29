@@ -2960,6 +2960,7 @@ name = "untitled-space-game"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "indexmap",
  "itertools 0.8.2",
  "leafwing_input_manager",
  "rand",

@@ -1,4 +1,5 @@
 use bevy::{prelude::*, utils::HashMap};
+use indexmap::IndexMap;
 use itertools::izip;
 use rand::{seq::IteratorRandom, thread_rng, Rng};
 use strum::IntoEnumIterator;
@@ -29,6 +30,29 @@ pub struct Commodity {
 
 #[derive(Component, Default)]
 pub struct CommodityInventory(pub HashMap<CommodityKind, u32>);
+
+#[derive(Component, Default)]
+pub struct CommodityPrices(pub IndexMap<CommodityKind, f32>);
+
+impl CommodityPrices {
+    pub fn new_random() -> Self {
+        let mut rng = thread_rng();
+        let num = rng.gen_range(2..=3);
+
+        let mut prices = IndexMap::new();
+
+        let mut commodities = CommodityKind::iter().choose_multiple(&mut rng, num);
+
+        for commodity in commodities.drain(0..) {
+            let sign = if rng.gen::<bool>() { 1. } else { -1. };
+            let multiplier = 1. + rng.gen_range(1..=5) as f32 / 10. * sign;
+
+            prices.insert(commodity, multiplier);
+        }
+
+        Self(prices)
+    }
+}
 
 pub struct CommodityPlugin;
 impl Plugin for CommodityPlugin {

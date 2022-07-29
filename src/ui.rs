@@ -1,15 +1,24 @@
 use bevy::prelude::*;
 
-use crate::{commodity::CommodityInventory, scanner::Scanner, FuelTank, Player};
+use crate::{
+    commodity::{CommodityInventory, CommodityPrices},
+    direction_indicator::{DirectionIndicator, DirectionIndicatorSettings},
+    scanner::{self, Scanner},
+    warp_node::WarpNode,
+    FuelTank, Player,
+};
 
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup)
+        app.insert_resource(WarpNodeDisplayOrder::default())
+            .add_startup_system(setup)
             .add_system(update_fuel)
             .add_system(update_commodity_inventory)
-            .add_system(update_scanner);
+            .add_system(update_scanner.after(scanner::update))
+            .add_system(track_warp_nodes)
+            .add_system(update_warp_nodes);
     }
 }
 
@@ -19,6 +28,11 @@ struct FuelLabel;
 struct CommodityInventoryLabel;
 #[derive(Component)]
 struct ScannerLabel;
+#[derive(Component)]
+struct WarpNodesLabel;
+
+#[derive(Default)]
+struct WarpNodeDisplayOrder(Vec<Entity>);
 
 fn setup(mut commands: Commands, assets: Res<AssetServer>) {
     let container = commands
@@ -60,9 +74,39 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
                 },
             )
             .with_alignment(TextAlignment::CENTER_RIGHT),
+            style: Style {
+                margin: UiRect {
+                    top: Val::Px(10.),
+                    ..default()
+                },
+                ..default()
+            },
             ..default()
         })
         .insert(CommodityInventoryLabel)
+        .id();
+
+    let warp_nodes = commands
+        .spawn_bundle(TextBundle {
+            text: Text::from_section(
+                "",
+                TextStyle {
+                    font: assets.load("fonts/Orbitron-Medium.ttf"),
+                    font_size: 20.,
+                    color: Color::ORANGE,
+                },
+            )
+            .with_alignment(TextAlignment::CENTER_RIGHT),
+            style: Style {
+                margin: UiRect {
+                    top: Val::Px(10.),
+                    ..default()
+                },
+                ..default()
+            },
+            ..default()
+        })
+        .insert(WarpNodesLabel)
         .id();
 
     let scanner = commands
@@ -76,6 +120,13 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
                 },
             )
             .with_alignment(TextAlignment::CENTER_RIGHT),
+            style: Style {
+                margin: UiRect {
+                    top: Val::Px(10.),
+                    ..default()
+                },
+                ..default()
+            },
             ..default()
         })
         .insert(ScannerLabel)
@@ -83,7 +134,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
 
     commands
         .entity(container)
-        .push_children(&[fuel, comm, scanner]);
+        .push_children(&[fuel, comm, warp_nodes, scanner]);
 }
 
 fn update_fuel(
@@ -109,6 +160,88 @@ fn update_commodity_inventory(
                 .map(|(k, v)| format!("{:?} {}\n", k, v))
                 .collect::<String>()
         }
+    }
+}
+
+fn track_warp_nodes(
+    query: Query<&DirectionIndicator, Added<DirectionIndicator>>,
+    node_query: Query<Entity, With<WarpNode>>,
+    mut display_order: ResMut<WarpNodeDisplayOrder>,
+) {
+    for indicator in query.iter() {
+        if let Ok(entity) = node_query.get(indicator.target) {
+            display_order.0.push(entity);
+        }
+    }
+}
+
+fn update_warp_nodes(
+    query: Query<(&CommodityPrices, &DirectionIndicatorSettings)>,
+    assets: Res<AssetServer>,
+    mut text_query: Query<&mut Text, With<WarpNodesLabel>>,
+    display_order: Res<WarpNodeDisplayOrder>,
+) {
+    if !display_order.is_changed() {
+        return;
+    }
+
+    let style_good = TextStyle {
+        font: assets.load("fonts/Orbitron-Medium.ttf"),
+        font_size: 20.,
+        color: Color::GREEN,
+    };
+    let style_bad = TextStyle {
+        font: assets.load("fonts/Orbitron-Medium.ttf"),
+        font_size: 20.,
+        color: Color::RED,
+    };
+    let style_label = TextStyle {
+        font: assets.load("fonts/Orbitron-Medium.ttf"),
+        font_size: 20.,
+        color: Color::ORANGE,
+    };
+    let style_neutral = TextStyle {
+        font: assets.load("fonts/Orbitron-Medium.ttf"),
+        font_size: 20.,
+        color: Color::BEIGE,
+    };
+
+    for mut text in text_query.iter_mut() {
+        let mut sections = vec![];
+
+        for entity in &display_order.0 {
+            if let Ok((prices, settings)) = query.get(*entity) {
+                sections.push(TextSection::new("Node ".to_string(), style_label.clone()));
+                sections.push(TextSection::new(
+                    settings
+                        .label
+                        .as_ref()
+                        .map_or_else(|| "?".to_string(), |l| l.clone()),
+                    style_label.clone(),
+                ));
+                sections.push(TextSection::new("\n".to_string(), style_label.clone()));
+
+                for (kind, price) in prices.0.iter() {
+                    let (price_style, sign) = if *price < 1.0 {
+                        (style_bad.clone(), "-")
+                    } else {
+                        (style_good.clone(), "+")
+                    };
+
+                    sections.push(TextSection::new(
+                        format!("{:?} ", kind),
+                        style_neutral.clone(),
+                    ));
+                    sections.push(TextSection::new(
+                        format!("{}{:.0}%\n", sign, (1. - price).abs() * 100.),
+                        price_style,
+                    ));
+                }
+
+                sections.push(TextSection::new("\n".to_string(), style_neutral.clone()));
+            }
+        }
+        text.sections = sections;
     }
 }
 
