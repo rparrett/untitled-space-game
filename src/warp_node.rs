@@ -3,13 +3,14 @@ use itertools::izip;
 use rand::{thread_rng, Rng};
 
 use crate::{
-    commodity::Commodity, direction_indicator::DirectionIndicatorSettings, layer, scanner::Scanner,
+    commodity::CommodityPrices, direction_indicator::DirectionIndicatorSettings, layer,
+    scanner::Scanner,
 };
 
 pub struct WarpNodePlugin;
 impl Plugin for WarpNodePlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup).add_system(restart_scanner);
+        app.add_startup_system(setup);
     }
 }
 
@@ -72,11 +73,5 @@ fn setup(
             .id();
 
         scanner.warp_nodes.push_back(entity);
-    }
-}
-
-fn restart_scanner(mut scanner: ResMut<Scanner>, query: Query<&Commodity>) {
-    if query.is_empty() && scanner.timer.paused() {
-        scanner.timer.unpause();
     }
 }
