@@ -6,14 +6,24 @@ Weapons shoot automatically. Player just flies.
 
 Enemies swarm the player. When destroyed, enemies drop warp fuel.
 
-When the player has obtained enough warp fuel, they can fly to the edge of the screen to warp to the next planetary system.
+When the player has enough warp fuel, they can fly to the edge of the screen to warp to the next planetary system.
 
-Upon arriving at the next planetary system, a player can purchase upgrades.
+Planetary systems buy (and sell?) commodities, and you must trade for maximum profit.
 
-Possibly, planetary systems buy and sell commodities, and you must trade for maximum profit.
+Upon arriving at the next planetary system, a player can purchase upgrades with currency earned by trading.
 
-Chevron is displayed around edges of screen to indicate position of planet. (or, minimap)
+Chevron is displayed around edges of screen to indicate position of planet.
 
 Some sort of loot is placed randomly throughout the level to encourage exploration.
 
-After warping into a planetary system, your scanners will start working. They will reveal the commodities in the sector one by one, and then finally the other planetary systems that can be warped to.
+After warping into a planetary system, your scanners will start working.
+
+They will reveal the commodities in the sector one by one. When all commodities are collected, your scanners will search for the other planetary systems that can be warped to.
+
+When the player explodes they can spend some sort of points that they earned somehow for unlocks.
+
+## TODO
+
+- If you stumble upon a commodity, it should be revealed immediately.
+- Add bevy_asset_loader and a loading state.
+- Reset the level upon reaching a warp node with full fuel.
