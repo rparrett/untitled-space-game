@@ -13,7 +13,7 @@ pub struct Enemy;
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(SpawnTimer(Timer::from_seconds(5., true)))
+        app.insert_resource(SpawnTimer(Timer::from_seconds(4., true)))
             .insert_resource(RampUpTimer(Timer::from_seconds(30., true)))
             .add_system(spawn_enemy)
             .add_system(move_enemy)
@@ -84,7 +84,7 @@ fn ramp_up(time: Res<Time>, mut spawn: ResMut<SpawnTimer>, mut ramp: ResMut<Ramp
         return;
     }
 
-    let new = (spawn.0.duration().as_secs_f32() / 1.8).max(0.4);
+    let new = (spawn.0.duration().as_secs_f32() / 1.5).max(0.5);
     spawn.0.set_duration(Duration::from_secs_f32(new));
 }
 
