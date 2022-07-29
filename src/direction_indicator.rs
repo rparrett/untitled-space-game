@@ -135,7 +135,7 @@ fn update(
                         label_transform.translation.x = pos.x;
                         label_transform.translation.y = pos.y;
 
-                        label.sections[0].value = format!("{:.1}ls", diff.length() / 1000.);
+                        label.sections[0].value = format!("{:.1}Mm", diff.length() / 1000.);
                     }
 
                     if let Ok(mut arrow) = arrow_query.get_mut(*child) {
