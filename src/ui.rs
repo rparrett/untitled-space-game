@@ -58,6 +58,13 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
                     color: Color::GREEN,
                 },
             ),
+            style: Style {
+                margin: UiRect {
+                    right: Val::Px(5.),
+                    ..default()
+                },
+                ..default()
+            },
             ..default()
         })
         .insert(FuelLabel)
@@ -77,6 +84,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             style: Style {
                 margin: UiRect {
                     top: Val::Px(10.),
+                    right: Val::Px(5.),
                     ..default()
                 },
                 ..default()
@@ -100,6 +108,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             style: Style {
                 margin: UiRect {
                     top: Val::Px(10.),
+                    right: Val::Px(5.),
                     ..default()
                 },
                 ..default()
@@ -123,6 +132,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             style: Style {
                 margin: UiRect {
                     top: Val::Px(10.),
+                    right: Val::Px(5.),
                     ..default()
                 },
                 ..default()
