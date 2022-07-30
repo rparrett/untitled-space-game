@@ -3,7 +3,10 @@ use std::time::Duration;
 use bevy::prelude::*;
 use rand::{thread_rng, Rng};
 
-use crate::{fuel::SpawnFuelPelletEvent, util, Health, MaxVelocity, Player, Velocity};
+use crate::{
+    fuel::SpawnFuelPelletEvent, util, DespawnOnRestart, GameState, Health, MaxVelocity, Player,
+    Velocity,
+};
 
 struct RampUpTimer(Timer);
 struct SpawnTimer(Timer);
@@ -15,10 +18,13 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(SpawnTimer(Timer::from_seconds(4., true)))
             .insert_resource(RampUpTimer(Timer::from_seconds(30., true)))
-            .add_system(spawn_enemy)
-            .add_system(move_enemy)
-            .add_system(ramp_up)
-            .add_system(despawn);
+            .add_system_set(
+                SystemSet::on_update(GameState::Playing)
+                    .with_system(spawn_enemy)
+                    .with_system(move_enemy)
+                    .with_system(ramp_up)
+                    .with_system(despawn),
+            );
     }
 }
 
@@ -62,7 +68,8 @@ fn spawn_enemy(
             max: 1.,
         })
         .insert(MaxVelocity(30.))
-        .insert(Velocity::default());
+        .insert(Velocity::default())
+        .insert(DespawnOnRestart);
 }
 
 fn move_enemy(

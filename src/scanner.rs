@@ -5,18 +5,19 @@ use bevy::prelude::*;
 use crate::{
     commodity::Commodity,
     direction_indicator::{DirectionIndicator, DirectionIndicatorSettings},
+    DespawnOnRestart, GameState,
 };
 
 pub struct ScannerPlugin;
 impl Plugin for ScannerPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Scanner {
-            timer: Timer::from_seconds(45., true),
-            commodities: VecDeque::new(),
-            warp_nodes: VecDeque::new(),
-        })
-        .add_system(update)
-        .add_system(unpause);
+        app.add_system_set(SystemSet::on_exit(GameState::Warping).with_system(reset))
+            .init_resource::<Scanner>()
+            .add_system_set(
+                SystemSet::on_update(GameState::Playing)
+                    .with_system(update)
+                    .with_system(unpause),
+            );
     }
 }
 
@@ -24,6 +25,20 @@ pub struct Scanner {
     pub timer: Timer,
     pub commodities: VecDeque<Entity>,
     pub warp_nodes: VecDeque<Entity>,
+}
+
+impl Default for Scanner {
+    fn default() -> Self {
+        Self {
+            timer: Timer::from_seconds(45., true),
+            commodities: VecDeque::new(),
+            warp_nodes: VecDeque::new(),
+        }
+    }
+}
+
+pub fn reset(mut commands: Commands) {
+    commands.init_resource::<Scanner>();
 }
 
 pub fn update(
@@ -50,10 +65,13 @@ pub fn update(
 
     while let Some(entity) = entities.pop_front() {
         if let Ok(settings) = target_query.get(entity) {
-            commands.spawn().insert(DirectionIndicator {
-                target: entity,
-                settings: (*settings).clone(),
-            });
+            commands
+                .spawn()
+                .insert(DirectionIndicator {
+                    target: entity,
+                    settings: (*settings).clone(),
+                })
+                .insert(DespawnOnRestart);
             break;
         }
     }

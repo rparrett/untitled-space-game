@@ -4,8 +4,9 @@ use bevy::{
     render::render_resource::{AsBindGroup, ShaderRef},
     sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle},
 };
+use interpolation::Ease;
 
-use crate::Player;
+use crate::{warp_node::WarpAnimation, DespawnOnRestart, GameState, Player, Velocity};
 
 pub struct StarfieldPlugin;
 #[derive(Component)]
@@ -14,8 +15,9 @@ struct Starfield;
 impl Plugin for StarfieldPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(Material2dPlugin::<StarfieldMaterial>::default())
-            .add_startup_system(setup)
-            .add_system(move_starfield);
+            .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(setup))
+            .add_system_set(SystemSet::on_update(GameState::Playing).with_system(move_starfield))
+            .add_system_set(SystemSet::on_update(GameState::Warping).with_system(warp_animation));
     }
 }
 
@@ -36,6 +38,7 @@ fn setup(
             transform: Transform::from_translation(Vec3::new(0., 0., crate::layer::BACKGROUND)),
             ..default()
         })
+        .insert(DespawnOnRestart)
         .insert(Starfield);
 }
 
@@ -53,6 +56,26 @@ fn move_starfield(
     let mut starfield = starfield_query.single_mut();
     starfield.translation.x = player.translation.x;
     starfield.translation.y = player.translation.y;
+}
+
+fn warp_animation(
+    mut materials: ResMut<Assets<StarfieldMaterial>>,
+    query: Query<(&Transform, &Velocity), With<Player>>,
+    mut starfield_query: Query<&mut Transform, (With<Starfield>, Without<Player>)>,
+    time: Res<Time>,
+    animation: Res<WarpAnimation>,
+) {
+    let (player_transform, player_velocity) = query.single();
+
+    for mat in materials.iter_mut() {
+        mat.1.pos += player_velocity.0
+            * time.delta_seconds()
+            * Vec2::splat(1. + Ease::quadratic_in(animation.starfield_timer.percent()) * 100.);
+    }
+
+    let mut starfield = starfield_query.single_mut();
+    starfield.translation.x = player_transform.translation.x;
+    starfield.translation.y = player_transform.translation.y;
 }
 
 /// The Material trait is very configurable, but comes with sensible defaults for all methods.

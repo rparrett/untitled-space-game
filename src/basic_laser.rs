@@ -1,12 +1,17 @@
 use bevy::{prelude::*, utils::HashSet};
 
-use crate::{enemy::Enemy, layer, Health, Velocity};
+use crate::{enemy::Enemy, layer, DespawnOnRestart, GameState, Health, Velocity};
 
 pub struct BasicLaserPlugin;
 
 impl Plugin for BasicLaserPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(fire).add_system(collide).add_system(despawn);
+        app.add_system_set(
+            SystemSet::on_update(GameState::Playing)
+                .with_system(fire)
+                .with_system(collide)
+                .with_system(despawn),
+        );
     }
 }
 
@@ -54,7 +59,8 @@ fn fire(mut commands: Commands, mut query: Query<(&mut BasicLaser, &Transform)>,
             })
             .insert(Velocity(
                 rot.mul_vec3(Vec3::new(1., 0., 0.)).truncate() * 100.,
-            ));
+            ))
+            .insert(DespawnOnRestart);
     }
 }
 

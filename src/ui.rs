@@ -5,7 +5,7 @@ use crate::{
     direction_indicator::{DirectionIndicator, DirectionIndicatorSettings},
     scanner::{self, Scanner},
     warp_node::WarpNode,
-    FuelTank, Player,
+    DespawnOnRestart, Fonts, FuelTank, GameState, Player,
 };
 
 pub struct UiPlugin;
@@ -13,12 +13,15 @@ pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(WarpNodeDisplayOrder::default())
-            .add_startup_system(setup)
-            .add_system(update_fuel)
-            .add_system(update_commodity_inventory)
-            .add_system(update_scanner.after(scanner::update))
-            .add_system(track_warp_nodes)
-            .add_system(update_warp_nodes);
+            .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(setup))
+            .add_system_set(
+                SystemSet::on_update(GameState::Playing)
+                    .with_system(update_fuel)
+                    .with_system(update_commodity_inventory)
+                    .with_system(update_scanner.after(scanner::update))
+                    .with_system(track_warp_nodes)
+                    .with_system(update_warp_nodes),
+            );
     }
 }
 
@@ -34,7 +37,7 @@ struct WarpNodesLabel;
 #[derive(Default)]
 struct WarpNodeDisplayOrder(Vec<Entity>);
 
-fn setup(mut commands: Commands, assets: Res<AssetServer>) {
+fn setup(mut commands: Commands, fonts: Res<Fonts>) {
     let container = commands
         .spawn_bundle(NodeBundle {
             style: Style {
@@ -46,6 +49,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             color: Color::NONE.into(),
             ..default()
         })
+        .insert(DespawnOnRestart)
         .id();
 
     let fuel = commands
@@ -53,7 +57,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             text: Text::from_section(
                 "FUEL 0 / 50",
                 TextStyle {
-                    font: assets.load("fonts/Orbitron-Medium.ttf"),
+                    font: fonts.main.clone(),
                     font_size: 20.,
                     color: Color::GREEN,
                 },
@@ -75,7 +79,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             text: Text::from_section(
                 "",
                 TextStyle {
-                    font: assets.load("fonts/Orbitron-Medium.ttf"),
+                    font: fonts.main.clone(),
                     font_size: 20.,
                     color: Color::BEIGE,
                 },
@@ -99,7 +103,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             text: Text::from_section(
                 "",
                 TextStyle {
-                    font: assets.load("fonts/Orbitron-Medium.ttf"),
+                    font: fonts.main.clone(),
                     font_size: 20.,
                     color: Color::ORANGE,
                 },
@@ -123,7 +127,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             text: Text::from_section(
                 "",
                 TextStyle {
-                    font: assets.load("fonts/Orbitron-Medium.ttf"),
+                    font: fonts.main.clone(),
                     font_size: 20.,
                     color: Color::BEIGE,
                 },
@@ -187,31 +191,31 @@ fn track_warp_nodes(
 
 fn update_warp_nodes(
     query: Query<(&CommodityPrices, &DirectionIndicatorSettings)>,
-    assets: Res<AssetServer>,
     mut text_query: Query<&mut Text, With<WarpNodesLabel>>,
     display_order: Res<WarpNodeDisplayOrder>,
+    fonts: Res<Fonts>,
 ) {
     if !display_order.is_changed() {
         return;
     }
 
     let style_good = TextStyle {
-        font: assets.load("fonts/Orbitron-Medium.ttf"),
+        font: fonts.main.clone(),
         font_size: 20.,
         color: Color::GREEN,
     };
     let style_bad = TextStyle {
-        font: assets.load("fonts/Orbitron-Medium.ttf"),
+        font: fonts.main.clone(),
         font_size: 20.,
         color: Color::RED,
     };
     let style_label = TextStyle {
-        font: assets.load("fonts/Orbitron-Medium.ttf"),
+        font: fonts.main.clone(),
         font_size: 20.,
         color: Color::ORANGE,
     };
     let style_neutral = TextStyle {
-        font: assets.load("fonts/Orbitron-Medium.ttf"),
+        font: fonts.main.clone(),
         font_size: 20.,
         color: Color::BEIGE,
     };

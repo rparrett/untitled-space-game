@@ -1,5 +1,6 @@
 use basic_laser::{BasicLaser, BasicLaserPlugin};
-use bevy::{asset::AssetServerSettings, prelude::*};
+use bevy::{asset::AssetServerSettings, log::LogSettings, prelude::*};
+use bevy_asset_loader::prelude::*;
 use commodity::{CommodityInventory, CommodityPlugin};
 use direction_indicator::{
     DirectionIndicator, DirectionIndicatorPlugin, DirectionIndicatorSettings,
@@ -26,14 +27,24 @@ mod warp_node;
 
 fn main() {
     App::new()
+        .insert_resource(LogSettings {
+            filter:
+                "trace,bevy_ecs::event=debug,bevy_render=debug,wgpu_core=warn,wgpu_hal=warn,untitled-space-game=trace"
+                    .into(),
+            level: bevy::log::Level::TRACE,
+        })
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AssetServerSettings {
             watch_for_changes: true,
             ..default()
         })
         .add_plugins(DefaultPlugins)
-        // This plugin maps inputs to an input-type agnostic action-state
-        // We need to provide it with an enum which stores the possible actions a player could take
+        .add_loading_state(
+            LoadingState::new(GameState::Loading)
+                .continue_to_state(GameState::Playing)
+                .with_collection::<Fonts>(),
+        )
+        .add_state(GameState::Loading)
         .add_plugin(InputManagerPlugin::<Action>::default())
         .add_plugin(StarfieldPlugin)
         .add_plugin(BasicLaserPlugin)
@@ -44,16 +55,42 @@ fn main() {
         .add_plugin(ScannerPlugin)
         .add_plugin(WarpNodePlugin)
         .add_plugin(UiPlugin)
-        .add_startup_system(spawn_player)
-        // Read the ActionState in your systems using queries!
-        .add_system(player_input)
-        .add_system(thruster.before(acceleration))
-        .add_system(acceleration.before(apply_acceleration))
-        .add_system(apply_acceleration.before(movement))
-        .add_system(rotation.before(movement))
-        .add_system(movement)
-        .add_system(move_camera.after(movement))
+        .add_system_set(SystemSet::on_exit(GameState::Loading).with_system(spawn_player))
+        .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_level))
+        .add_system_set(
+            SystemSet::on_update(GameState::Playing)
+                .with_system(player_input)
+                .with_system(thruster.before(acceleration))
+                .with_system(acceleration.before(apply_acceleration))
+                .with_system(apply_acceleration.before(movement))
+                .with_system(rotation.before(movement))
+                .with_system(movement)
+                .with_system(move_camera.after(movement)),
+        )
+        .add_system_set(
+            SystemSet::on_update(GameState::Warping)
+                .with_system(warp_movement)
+                .with_system(move_camera.after(warp_movement)),
+        )
+        .add_system_set(
+            SystemSet::on_exit(GameState::Warping)
+                .with_system(cleanup)
+                .with_system(reset_player),
+        )
         .run();
+}
+
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+enum GameState {
+    Loading,
+    Playing,
+    Warping,
+}
+
+#[derive(AssetCollection)]
+struct Fonts {
+    #[asset(path = "fonts/Orbitron-Medium.ttf")]
+    main: Handle<Font>,
 }
 
 // This is the list of "things in the game I want to be able to do based on input"
@@ -100,6 +137,9 @@ struct FuelTank {
     max: u32,
 }
 
+#[derive(Component)]
+struct DespawnOnRestart;
+
 fn spawn_player(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -126,9 +166,11 @@ fn spawn_player(
     ]);
 
     commands
-        .spawn_bundle(SpatialBundle::default())
+        .spawn_bundle(SpatialBundle {
+            transform: Transform::from_xyz(0., 0., layer::SHIP),
+            ..default()
+        })
         .insert(Player)
-        //.insert_bundle(SpatialBundle::default())
         .insert(Acceleration::default())
         .insert(Velocity::default())
         .insert(AngularVelocity::default())
@@ -159,8 +201,7 @@ fn spawn_player(
                 material: materials.add(Color::RED.into()),
                 transform: Transform::from_rotation(Quat::from_rotation_z(
                     -std::f32::consts::FRAC_PI_2,
-                ))
-                .with_translation(Vec3::new(0., 0., layer::SHIP)),
+                )),
                 ..default()
             });
             // thruster
@@ -171,12 +212,19 @@ fn spawn_player(
                     transform: Transform::from_rotation(Quat::from_rotation_z(
                         std::f32::consts::FRAC_PI_2,
                     ))
-                    .with_translation(Vec3::new(-10., 0., layer::THRUSTER)),
+                    .with_translation(Vec3::new(-10., 0., -0.1)),
                     ..default()
                 })
                 .insert(PlayerThruster);
         });
+}
 
+fn spawn_level(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    println!("spawn_level");
     let planet = commands
         .spawn_bundle(ColorMesh2dBundle {
             mesh: meshes.add(shape::Circle::new(60.).into()).into(),
@@ -184,15 +232,45 @@ fn spawn_player(
             transform: Transform::from_xyz(0., 0., layer::PLANET),
             ..default()
         })
+        .insert(DespawnOnRestart)
         .id();
 
-    commands.spawn().insert(DirectionIndicator {
-        target: planet,
-        settings: DirectionIndicatorSettings {
-            color: Color::AQUAMARINE,
-            label: None,
-        },
-    });
+    commands
+        .spawn()
+        .insert(DirectionIndicator {
+            target: planet,
+            settings: DirectionIndicatorSettings {
+                color: Color::AQUAMARINE,
+                label: None,
+            },
+        })
+        .insert(DespawnOnRestart);
+}
+
+fn reset_player(
+    mut query: Query<
+        (
+            &mut Transform,
+            &mut FuelTank,
+            &mut Velocity,
+            &mut AngularVelocity,
+        ),
+        With<Player>,
+    >,
+) {
+    for (mut transform, mut fuel, mut velocity, mut angular) in query.iter_mut() {
+        transform.translation = Vec2::ZERO.extend(layer::SHIP);
+        fuel.current = 0;
+        velocity.0 = Vec2::ZERO;
+        angular.0 = 0.;
+    }
+}
+
+fn cleanup(mut commands: Commands, query: Query<Entity, With<DespawnOnRestart>>) {
+    println!("cleanup");
+    for entity in query.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
 }
 
 fn player_input(
@@ -284,6 +362,12 @@ fn movement(time: Res<Time>, mut query: Query<(&mut Transform, &Velocity)>) {
     }
 }
 
+fn warp_movement(time: Res<Time>, mut query: Query<(&mut Transform, &Velocity)>) {
+    for (mut transform, velocity) in query.iter_mut() {
+        transform.translation += (velocity.0 * time.delta_seconds() / 7.).extend(0.);
+    }
+}
+
 fn thruster(
     mut thruster_query: Query<&mut Visibility, With<PlayerThruster>>,
     status_query: Query<&ThrusterStatus, (Changed<ThrusterStatus>, With<Player>)>,
@@ -301,6 +385,7 @@ fn move_camera(
 ) {
     let player = player_query.single();
     let mut camera = camera_query.single_mut();
+
     camera.translation.x = player.translation.x;
     camera.translation.y = player.translation.y;
 }

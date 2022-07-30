@@ -8,8 +8,10 @@ edition = "2021"
 [dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy.git" }
 leafwing_input_manager = { git = "https://github.com/Leafwing-Studios/leafwing-input-manager.git", branch = "dev" }
+bevy_asset_loader = { git = "https://github.com/NiklasEi/bevy_asset_loader.git", branch="bevy_main" }
 rand = "*"
 strum = "0.24"
 strum_macros = "0.24"
 itertools = "0.8"
 indexmap = "1.9"
+interpolation = "0.2"

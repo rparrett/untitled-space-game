@@ -248,6 +248,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_asset_loader"
+version = "0.11.0"
+source = "git+https://github.com/NiklasEi/bevy_asset_loader.git?branch=bevy_main#2e9f2a5eaafc80e7338719027e0e26172cf23d43"
+dependencies = [
+ "anyhow",
+ "bevy",
+ "bevy_asset_loader_derive",
+]
+
+[[package]]
+name = "bevy_asset_loader_derive"
+version = "0.11.0"
+source = "git+https://github.com/NiklasEi/bevy_asset_loader.git?branch=bevy_main#2e9f2a5eaafc80e7338719027e0e26172cf23d43"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "bevy_audio"
 version = "0.8.0-dev"
 source = "git+https://github.com/bevyengine/bevy.git#619c30c036ddfceb66030922099961bd17b65e35"
@@ -1739,6 +1759,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "interpolation"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3b7357d2bbc5ee92f8e899ab645233e43d21407573cceb37fed8bc3dede2c02"
+
+[[package]]
 name = "io-kit-sys"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2960,7 +2986,9 @@ name = "untitled-space-game"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_asset_loader",
  "indexmap",
+ "interpolation",
  "itertools 0.8.2",
  "leafwing_input_manager",
  "rand",

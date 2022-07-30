@@ -25,5 +25,4 @@ When the player explodes they can spend some sort of points that they earned som
 ## TODO
 
 - If you stumble upon a commodity, it should be revealed immediately.
-- Add bevy_asset_loader and a loading state.
 - Reset the level upon reaching a warp node with full fuel.

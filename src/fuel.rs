@@ -1,13 +1,17 @@
 use bevy::prelude::*;
 
-use crate::{layer, Acceleration, FuelTank, MaxVelocity, Player, Velocity};
+use crate::{
+    layer, Acceleration, DespawnOnRestart, FuelTank, GameState, MaxVelocity, Player, Velocity,
+};
 
 pub struct FuelPlugin;
 impl Plugin for FuelPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(movement)
-            .add_system(spawn)
-            .add_event::<SpawnFuelPelletEvent>();
+        app.add_event::<SpawnFuelPelletEvent>().add_system_set(
+            SystemSet::on_update(GameState::Playing)
+                .with_system(movement)
+                .with_system(spawn),
+        );
     }
 }
 
@@ -42,7 +46,8 @@ fn spawn(
             .insert(Velocity::default())
             .insert(Acceleration::default())
             .insert(MaxVelocity(300.))
-            .insert(FuelPellet);
+            .insert(FuelPellet)
+            .insert(DespawnOnRestart);
     }
 }
 

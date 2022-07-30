@@ -3,14 +3,22 @@ use bevy::prelude::*;
 use crate::{
     layer,
     util::{self, Edge},
-    Player,
+    GameState, Player,
 };
 
 pub struct DirectionIndicatorPlugin;
 impl Plugin for DirectionIndicatorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(update.after(crate::movement))
-            .add_system(decorate);
+        app.add_system_set(
+            SystemSet::on_update(GameState::Playing)
+                .with_system(update.after(crate::movement))
+                .with_system(decorate),
+        );
+        app.add_system_set(
+            SystemSet::on_update(GameState::Warping)
+                .with_system(update.after(crate::movement))
+                .with_system(decorate),
+        );
     }
 }
 

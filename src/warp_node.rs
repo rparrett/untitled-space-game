@@ -1,23 +1,77 @@
 use bevy::prelude::*;
+use interpolation::Ease;
 use itertools::izip;
 use rand::{thread_rng, Rng};
 
 use crate::{
     commodity::CommodityPrices, direction_indicator::DirectionIndicatorSettings, layer,
-    scanner::Scanner,
+    move_camera, scanner::Scanner, DespawnOnRestart, FuelTank, GameState, Player,
 };
 
 pub struct WarpNodePlugin;
 impl Plugin for WarpNodePlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup);
+        app.insert_resource(WarpAnimation::default())
+            .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_nodes))
+            .add_system_set(
+                SystemSet::on_update(GameState::Playing)
+                    .with_system(start_warp)
+                    .with_system(end_warp)
+                    .with_system(move_fade_sprite.after(move_camera)),
+            )
+            .add_system_set(
+                SystemSet::on_update(GameState::Warping)
+                    .with_system(warp)
+                    .with_system(move_fade_sprite.after(move_camera)),
+            );
     }
 }
 
 #[derive(Component)]
 pub struct WarpNode;
+#[derive(Component)]
+pub struct WarpFadeSprite;
 
-fn setup(
+pub struct WarpAnimation {
+    pub starfield_timer: Timer,
+    pub fade_out_timer: Timer,
+    pub fade_dwell_timer: Timer,
+    pub fade_in_timer: Timer,
+}
+
+impl WarpAnimation {
+    fn reset(&mut self) {
+        self.fade_out_timer.pause();
+        self.fade_out_timer.reset();
+        self.fade_in_timer.pause();
+        self.fade_in_timer.reset();
+        self.fade_dwell_timer.pause();
+        self.fade_dwell_timer.reset();
+        self.starfield_timer.reset();
+    }
+}
+
+impl Default for WarpAnimation {
+    fn default() -> Self {
+        let mut fade_out_timer = Timer::from_seconds(3., false);
+        fade_out_timer.pause();
+
+        let mut fade_in_timer = Timer::from_seconds(3., false);
+        fade_in_timer.pause();
+
+        let mut fade_dwell_timer = Timer::from_seconds(1., false);
+        fade_dwell_timer.pause();
+
+        Self {
+            starfield_timer: Timer::from_seconds(3., false),
+            fade_out_timer,
+            fade_dwell_timer,
+            fade_in_timer,
+        }
+    }
+}
+
+fn spawn_nodes(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -28,6 +82,7 @@ fn setup(
     let angular_variance_range = -40.0..40.0;
     let angular_offset_range = -30.0..30.0;
     let dist_range = 2600.0..3000.0;
+    //let dist_range = 600.0..800.0;
 
     let offset = rng.gen_range(angular_offset_range);
 
@@ -77,8 +132,114 @@ fn setup(
                 color: Color::ORANGE,
                 label: Some(label),
             })
+            .insert(DespawnOnRestart)
             .id();
 
         scanner.warp_nodes.push_back(entity);
+    }
+}
+
+fn start_warp(
+    query: Query<&Transform, With<WarpNode>>,
+    query_player: Query<(&Transform, &FuelTank), With<Player>>,
+    mut state: ResMut<State<GameState>>,
+    mut animation: ResMut<WarpAnimation>,
+) {
+    let (player_transform, fuel_tank) = query_player.single();
+
+    if fuel_tank.current != fuel_tank.max {
+        return;
+    }
+
+    for node in query.iter() {
+        let dist = player_transform
+            .translation
+            .truncate()
+            .distance(node.translation.truncate());
+        if dist < 80. {
+            animation.starfield_timer.reset();
+
+            let _ = state.overwrite_set(GameState::Warping);
+            return;
+        }
+    }
+}
+
+fn warp(
+    mut commands: Commands,
+    windows: Res<Windows>,
+    time: Res<Time>,
+    mut animation: ResMut<WarpAnimation>,
+    mut fade_sprite_query: Query<&mut Sprite, With<WarpFadeSprite>>,
+    mut state: ResMut<State<GameState>>,
+) {
+    animation.starfield_timer.tick(time.delta());
+    if animation.starfield_timer.just_finished() {
+        animation.fade_out_timer.unpause();
+
+        commands
+            .spawn_bundle(SpriteBundle {
+                sprite: Sprite {
+                    color: Color::NONE,
+                    custom_size: Some(Vec2::new(
+                        windows.get_primary().unwrap().width(),
+                        windows.get_primary().unwrap().height(),
+                    )),
+                    ..default()
+                },
+                transform: Transform::from_xyz(0., 0., layer::FADE),
+                ..default()
+            })
+            .insert(WarpFadeSprite);
+    }
+
+    animation.fade_out_timer.tick(time.delta());
+    if animation.fade_out_timer.just_finished() {
+        animation.fade_dwell_timer.unpause();
+    } else if !animation.fade_out_timer.paused() && !animation.fade_out_timer.finished() {
+        for mut sprite in fade_sprite_query.iter_mut() {
+            let val = Ease::cubic_out(animation.fade_out_timer.percent());
+            sprite.color = Color::rgba(0., 0., 0., val);
+        }
+    }
+
+    animation.fade_dwell_timer.tick(time.delta());
+    if animation.fade_dwell_timer.just_finished() {
+        animation.fade_in_timer.unpause();
+
+        let _ = state.overwrite_set(GameState::Playing); // XXX shopping
+    }
+}
+
+fn end_warp(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut animation: ResMut<WarpAnimation>,
+    mut fade_sprite_query: Query<(Entity, &mut Sprite), With<WarpFadeSprite>>,
+) {
+    animation.fade_in_timer.tick(time.delta());
+    if animation.fade_in_timer.just_finished() {
+        for (entity, _) in fade_sprite_query.iter_mut() {
+            commands.entity(entity).despawn();
+        }
+
+        animation.reset();
+    } else if !animation.fade_in_timer.paused() && !animation.fade_in_timer.finished() {
+        for (_, mut sprite) in fade_sprite_query.iter_mut() {
+            let val = Ease::cubic_out(animation.fade_in_timer.percent_left());
+            sprite.color = Color::rgba(0., 0., 0., val);
+        }
+    }
+}
+
+fn move_fade_sprite(
+    camera_query: Query<&Transform, (With<Camera>, Without<WarpFadeSprite>)>,
+    mut fade_sprite_query: Query<&mut Transform, With<WarpFadeSprite>>,
+) {
+    let camera = camera_query.single();
+
+    for mut transform in fade_sprite_query.iter_mut() {
+        transform.translation.x = camera.translation.x;
+        transform.translation.y = camera.translation.y;
     }
 }

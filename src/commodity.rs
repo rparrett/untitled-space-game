@@ -6,7 +6,8 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
-    direction_indicator::DirectionIndicatorSettings, layer, scanner::Scanner, util, Player,
+    direction_indicator::DirectionIndicatorSettings, layer, scanner::Scanner, util,
+    DespawnOnRestart, GameState, Player,
 };
 
 #[derive(EnumIter, Clone, Debug, PartialEq, Eq, Hash)]
@@ -57,7 +58,8 @@ impl CommodityPrices {
 pub struct CommodityPlugin;
 impl Plugin for CommodityPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup).add_system(pickup);
+        app.add_system_set(SystemSet::on_enter(GameState::Playing).with_system(setup))
+            .add_system_set(SystemSet::on_update(GameState::Playing).with_system(pickup));
     }
 }
 
@@ -72,6 +74,7 @@ pub fn setup(
     let angular_variance_range = -40.0..40.0;
     let angular_offset_range = -30.0..30.0;
     let dist_range = 1500.0..2500.0;
+    //let dist_range = 500.0..501.0;
 
     let offset = rng.gen_range(angular_offset_range);
 
@@ -107,6 +110,7 @@ pub fn setup(
                 color: Color::BEIGE,
                 label: None,
             })
+            .insert(DespawnOnRestart)
             .id();
 
         scanner.commodities.push_back(entity);
