@@ -10,6 +10,12 @@ use crate::{
 
 struct RampUpTimer(Timer);
 struct SpawnTimer(Timer);
+impl Default for SpawnTimer {
+    fn default() -> Self {
+        Self(Timer::from_seconds(4., true))
+    }
+}
+
 #[derive(Component)]
 pub struct Enemy;
 
@@ -24,7 +30,8 @@ impl Plugin for EnemyPlugin {
                     .with_system(move_enemy)
                     .with_system(ramp_up)
                     .with_system(despawn),
-            );
+            )
+            .add_system_set(SystemSet::on_exit(GameState::Warping).with_system(reset_timers));
     }
 }
 
@@ -109,4 +116,10 @@ fn despawn(
             continue;
         }
     }
+}
+
+fn reset_timers(mut commands: Commands, mut ramp: ResMut<RampUpTimer>) {
+    commands.insert_resource(SpawnTimer::default());
+
+    ramp.0.reset();
 }
