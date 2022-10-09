@@ -91,7 +91,7 @@ pub fn update(
             .map(|e| entities.swap_remove(e));
     }
 
-    if entities.len() == 0 {
+    if entities.is_empty() {
         scanner.timer.reset();
         scanner.timer.pause();
     }

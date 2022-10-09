@@ -170,7 +170,7 @@ fn decorate(
     for (entity, indicator) in query.iter() {
         let arrow = commands
             .spawn_bundle(ColorMesh2dBundle {
-                mesh: meshes.add(util::chevron(20., 20., 8.).into()).into(),
+                mesh: meshes.add(util::chevron(20., 20., 8.)).into(),
                 material: materials.add(indicator.settings.color.into()),
                 ..default()
             })
