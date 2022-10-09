@@ -46,7 +46,7 @@ impl CommodityPrices {
         let mut commodities = CommodityKind::iter().choose_multiple(&mut rng, num);
 
         for commodity in commodities.drain(0..) {
-            let sign = rng.gen::<f32>().signum();
+            let sign = if rng.gen() { 1. } else { -1. };
 
             let pct = rng.gen_range(1..=5) as f32 / 10.;
 
