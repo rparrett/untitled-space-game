@@ -157,6 +157,6 @@ pub fn proximity(
             .warp_nodes
             .iter()
             .position(|e| *e == entity)
-            .map(|e| scanner.commodities.swap_remove(e));
+            .map(|e| scanner.warp_nodes.swap_remove(e));
     }
 }
