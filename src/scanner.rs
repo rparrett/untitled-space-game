@@ -1,11 +1,9 @@
-use std::collections::VecDeque;
-
 use bevy::prelude::*;
 
 use crate::{
     commodity::Commodity,
     direction_indicator::{DirectionIndicator, DirectionIndicatorSettings},
-    DespawnOnRestart, GameState,
+    DespawnOnRestart, GameState, Player,
 };
 
 pub struct ScannerPlugin;
@@ -15,6 +13,7 @@ impl Plugin for ScannerPlugin {
             .init_resource::<Scanner>()
             .add_system_set(
                 SystemSet::on_update(GameState::Playing)
+                    .with_system(proximity)
                     .with_system(update)
                     .with_system(unpause),
             );
@@ -23,16 +22,16 @@ impl Plugin for ScannerPlugin {
 
 pub struct Scanner {
     pub timer: Timer,
-    pub commodities: VecDeque<Entity>,
-    pub warp_nodes: VecDeque<Entity>,
+    pub commodities: Vec<Entity>,
+    pub warp_nodes: Vec<Entity>,
 }
 
 impl Default for Scanner {
     fn default() -> Self {
         Self {
             timer: Timer::from_seconds(45., true),
-            commodities: VecDeque::new(),
-            warp_nodes: VecDeque::new(),
+            commodities: Vec::new(),
+            warp_nodes: Vec::new(),
         }
     }
 }
@@ -45,13 +44,15 @@ pub fn update(
     mut commands: Commands,
     time: Res<Time>,
     mut scanner: ResMut<Scanner>,
-    target_query: Query<&DirectionIndicatorSettings>,
+    player_query: Query<&Transform, With<Player>>,
+    target_query: Query<(Entity, &Transform, &DirectionIndicatorSettings)>,
 ) {
     scanner.timer.tick(time.delta());
-
     if !scanner.timer.just_finished() {
         return;
     }
+
+    let player_transform = player_query.single();
 
     let entities = if !scanner.commodities.is_empty() {
         &mut scanner.commodities
@@ -63,17 +64,31 @@ pub fn update(
     // exists. The player may have already collected the commodity
     // before it was revealed by the scanner.
 
-    while let Some(entity) = entities.pop_front() {
-        if let Ok(settings) = target_query.get(entity) {
-            commands
-                .spawn()
-                .insert(DirectionIndicator {
-                    target: entity,
-                    settings: (*settings).clone(),
-                })
-                .insert(DespawnOnRestart);
-            break;
-        }
+    let closest_target = target_query.iter_many(entities.iter()).min_by(|a, b| {
+        let (_, a_transform, _) = a;
+        let (_, b_transform, _) = b;
+        let a_dist = a_transform
+            .translation
+            .distance_squared(player_transform.translation);
+        let b_dist = b_transform
+            .translation
+            .distance_squared(player_transform.translation);
+        a_dist.partial_cmp(&b_dist).unwrap()
+    });
+
+    if let Some((entity, _, settings)) = closest_target {
+        commands
+            .spawn()
+            .insert(DirectionIndicator {
+                target: entity,
+                settings: (*settings).clone(),
+            })
+            .insert(DespawnOnRestart);
+
+        entities
+            .iter()
+            .position(|e| *e == entity)
+            .map(|e| entities.swap_remove(e));
     }
 
     if entities.len() == 0 {
@@ -95,4 +110,53 @@ pub fn unpause(commodity_query: Query<&Commodity>, mut scanner: ResMut<Scanner>)
     }
 
     scanner.timer.unpause();
+}
+
+pub fn proximity(
+    mut commands: Commands,
+    camera_query: Query<(&Camera, &GlobalTransform)>,
+    query: Query<(Entity, &DirectionIndicatorSettings, &Transform)>,
+    mut scanner: ResMut<Scanner>,
+) {
+    let (camera, gt) = camera_query.single();
+
+    let mut remove: Option<Entity> = None;
+
+    for (entity, settings, transform) in query
+        .iter_many(&scanner.commodities)
+        .chain(query.iter_many(&scanner.warp_nodes))
+    {
+        let ndc = camera.world_to_ndc(gt, transform.translation);
+        if ndc.is_none() {
+            continue;
+        }
+        let ndc = ndc.unwrap();
+
+        let visible = ndc.x < 1. && ndc.y < 1. && ndc.x > -1. && ndc.y > -1.;
+
+        if visible {
+            commands
+                .spawn()
+                .insert(DirectionIndicator {
+                    target: entity,
+                    settings: (*settings).clone(),
+                })
+                .insert(DespawnOnRestart);
+
+            remove = Some(entity);
+        }
+    }
+
+    if let Some(entity) = remove {
+        scanner
+            .commodities
+            .iter()
+            .position(|e| *e == entity)
+            .map(|e| scanner.commodities.swap_remove(e));
+        scanner
+            .warp_nodes
+            .iter()
+            .position(|e| *e == entity)
+            .map(|e| scanner.commodities.swap_remove(e));
+    }
 }

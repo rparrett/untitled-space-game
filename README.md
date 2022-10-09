@@ -24,5 +24,4 @@ When the player explodes they can spend some sort of points that they earned som
 
 ## TODO
 
-- If you randomly stumble upon a commodity before your scanner picks it up, it should be revealed immediately.
 - Add shopping screen

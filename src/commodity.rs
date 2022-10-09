@@ -105,7 +105,7 @@ pub fn setup(
             .insert(DespawnOnRestart)
             .id();
 
-        scanner.commodities.push_back(entity);
+        scanner.commodities.push(entity);
     }
 }
 

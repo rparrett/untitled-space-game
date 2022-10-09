@@ -118,7 +118,7 @@ fn spawn_nodes(
             .insert(DespawnOnRestart)
             .id();
 
-        scanner.warp_nodes.push_back(entity);
+        scanner.warp_nodes.push(entity);
     }
 }
 

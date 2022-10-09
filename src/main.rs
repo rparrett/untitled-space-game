@@ -97,7 +97,7 @@ enum Action {
 }
 
 #[derive(Component)]
-struct Player;
+pub struct Player;
 #[derive(Component)]
 struct PlayerThruster;
 #[derive(Component, Default)]
