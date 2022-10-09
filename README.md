@@ -20,7 +20,7 @@ After warping into a planetary system, your scanners will start working.
 
 They will reveal the commodities in the sector one by one. When all commodities are collected, your scanners will search for the other planetary systems that can be warped to.
 
-When the player explodes they can spend some sort of points that they earned somehow for unlocks.
+When the player dies they can spend (some sort of points that they earned somehow) for permanent unlocks and/or boosts.
 
 ## TODO
 
