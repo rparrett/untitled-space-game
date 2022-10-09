@@ -5,7 +5,7 @@ use crate::{
     direction_indicator::{DirectionIndicator, DirectionIndicatorSettings},
     scanner::{self, Scanner},
     warp_node::WarpNode,
-    DespawnOnRestart, Fonts, FuelTank, GameState, Player,
+    Credits, DespawnOnRestart, Fonts, FuelTank, GameState, Player,
 };
 
 pub struct UiPlugin;
@@ -17,6 +17,7 @@ impl Plugin for UiPlugin {
             .add_system_set(
                 SystemSet::on_update(GameState::Playing)
                     .with_system(update_fuel)
+                    .with_system(update_credits)
                     .with_system(update_commodity_inventory)
                     .with_system(update_scanner.after(scanner::update))
                     .with_system(track_warp_nodes)
@@ -27,6 +28,8 @@ impl Plugin for UiPlugin {
 
 #[derive(Component)]
 struct FuelLabel;
+#[derive(Component)]
+struct CreditsLabel;
 #[derive(Component)]
 struct CommodityInventoryLabel;
 #[derive(Component)]
@@ -72,6 +75,28 @@ fn setup(mut commands: Commands, fonts: Res<Fonts>) {
             ..default()
         })
         .insert(FuelLabel)
+        .id();
+
+    let credits = commands
+        .spawn_bundle(TextBundle {
+            text: Text::from_section(
+                "CREDS 0",
+                TextStyle {
+                    font: fonts.main.clone(),
+                    font_size: 20.,
+                    color: Color::WHITE,
+                },
+            ),
+            style: Style {
+                margin: UiRect {
+                    right: Val::Px(5.),
+                    ..default()
+                },
+                ..default()
+            },
+            ..default()
+        })
+        .insert(CreditsLabel)
         .id();
 
     let comm = commands
@@ -148,7 +173,7 @@ fn setup(mut commands: Commands, fonts: Res<Fonts>) {
 
     commands
         .entity(container)
-        .push_children(&[fuel, comm, warp_nodes, scanner]);
+        .push_children(&[fuel, credits, comm, warp_nodes, scanner]);
 }
 
 fn update_fuel(
@@ -158,6 +183,17 @@ fn update_fuel(
     for fuel in query.iter() {
         for mut label in label_query.iter_mut() {
             label.sections[0].value = format!("FUEL {} / {}", fuel.current, fuel.max);
+        }
+    }
+}
+
+fn update_credits(
+    query: Query<&Credits, (Changed<Credits>, With<Player>)>,
+    mut label_query: Query<&mut Text, With<CreditsLabel>>,
+) {
+    for credits in query.iter() {
+        for mut label in label_query.iter_mut() {
+            label.sections[0].value = format!("CREDS {}", credits.0);
         }
     }
 }

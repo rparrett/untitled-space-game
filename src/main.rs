@@ -11,7 +11,7 @@ use leafwing_input_manager::prelude::*;
 use scanner::ScannerPlugin;
 use starfield::StarfieldPlugin;
 use ui::UiPlugin;
-use warp_node::WarpNodePlugin;
+use warp_node::{WarpNodePlugin, WarpedTo};
 
 mod basic_laser;
 mod commodity;
@@ -69,6 +69,7 @@ fn main() {
         .add_system_set(
             SystemSet::on_exit(GameState::Warping)
                 .with_system(cleanup)
+                .with_system(sell)
                 .with_system(reset_player),
         )
         .run();
@@ -130,6 +131,8 @@ struct FuelTank {
     current: u32,
     max: u32,
 }
+#[derive(Component)]
+struct Credits(u32);
 
 #[derive(Component)]
 struct DespawnOnRestart;
@@ -177,6 +180,7 @@ fn spawn_player(
             current: 0,
             max: 50,
         })
+        .insert(Credits(0))
         .insert(BasicLaser {
             timer: Timer::from_seconds(1., true),
             damage: 1.,
@@ -239,6 +243,24 @@ fn spawn_level(
             },
         })
         .insert(DespawnOnRestart);
+}
+
+fn sell(
+    mut query: Query<(&mut Credits, &mut CommodityInventory), With<Player>>,
+    warped_to: Option<Res<WarpedTo>>,
+) {
+    if warped_to.is_none() {
+        return;
+    }
+    let warped_to = warped_to.unwrap();
+
+    let (mut credits, mut inventory) = query.single_mut();
+
+    for (commodity, quantity) in inventory.0.drain() {
+        let multiplier = warped_to.0 .0.get(&commodity).unwrap_or(&1.);
+        let price = (quantity as f32 * multiplier).round() as u32;
+        credits.0 += price;
+    }
 }
 
 fn reset_player(

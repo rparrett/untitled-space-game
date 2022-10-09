@@ -71,6 +71,8 @@ impl Default for WarpAnimation {
     }
 }
 
+pub struct WarpedTo(pub CommodityPrices);
+
 fn spawn_nodes(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -123,7 +125,8 @@ fn spawn_nodes(
 }
 
 fn start_warp(
-    query: Query<&Transform, With<WarpNode>>,
+    mut commands: Commands,
+    query: Query<(&Transform, &CommodityPrices), With<WarpNode>>,
     query_player: Query<(&Transform, &FuelTank), With<Player>>,
     mut state: ResMut<State<GameState>>,
     mut animation: ResMut<WarpAnimation>,
@@ -134,7 +137,7 @@ fn start_warp(
         return;
     }
 
-    for node in query.iter() {
+    for (node, prices) in query.iter() {
         let dist = player_transform
             .translation
             .truncate()
@@ -143,6 +146,9 @@ fn start_warp(
             animation.starfield_timer.reset();
 
             let _ = state.overwrite_set(GameState::Warping);
+
+            commands.insert_resource(WarpedTo(prices.clone()));
+
             return;
         }
     }

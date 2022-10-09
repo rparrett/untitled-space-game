@@ -32,7 +32,7 @@ pub struct Commodity {
 #[derive(Component, Default)]
 pub struct CommodityInventory(pub HashMap<CommodityKind, u32>);
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Clone)]
 pub struct CommodityPrices(pub IndexMap<CommodityKind, f32>);
 
 impl CommodityPrices {
