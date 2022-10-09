@@ -116,6 +116,7 @@ pub fn chevron(width: f32, height: f32, thickness: f32) -> Mesh {
     mesh
 }
 
+/// Generate `num` u32s with the sum of `total` and minimum value `min`
 pub fn random_u32_subdivisions(num: u32, total: u32, min: u32) -> Vec<u32> {
     debug_assert!(total > num * min);
 
@@ -132,6 +133,33 @@ pub fn random_u32_subdivisions(num: u32, total: u32, min: u32) -> Vec<u32> {
     }
 
     vals.push(total - sum);
+
+    vals
+}
+
+/// Generate an ordered set of `num` f32s between 0.0 and `max`
+///
+/// The absolute difference between values is at least `min_gap`.
+///
+/// That minimum gap also "wraps" around from the last value to the first.
+
+pub fn random_circular_f32_distribution(num: u32, min_gap: f32, max: f32) -> Vec<f32> {
+    debug_assert!(num as f32 * min_gap < max);
+
+    let mut rng = thread_rng();
+
+    let mut vals = Vec::with_capacity(num as usize);
+    let mut last = 0.0;
+
+    for i in 0..num {
+        let start = if i == 0 { last } else { last + min_gap };
+        let gap_allowance = (num - i - 1) as f32 * min_gap;
+        let end = max - gap_allowance;
+
+        last = rng.gen_range(start..end);
+
+        vals.push(last);
+    }
 
     vals
 }

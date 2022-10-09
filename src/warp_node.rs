@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 use interpolation::Ease;
 use itertools::izip;
-use rand::{thread_rng, Rng};
+use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
     commodity::CommodityPrices, direction_indicator::DirectionIndicatorSettings, layer,
-    move_camera, scanner::Scanner, DespawnOnRestart, FuelTank, GameState, Player,
+    move_camera, scanner::Scanner, util, DespawnOnRestart, FuelTank, GameState, Player,
 };
 
 pub struct WarpNodePlugin;
@@ -77,39 +77,22 @@ fn spawn_nodes(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut scanner: ResMut<Scanner>,
 ) {
-    let mut rng = thread_rng();
+    let rng = thread_rng();
 
-    let angular_variance_range = -40.0..40.0;
-    let angular_offset_range = -30.0..30.0;
-    let dist_range = 2600.0..3000.0;
+    let num = 3;
+
+    let dist_range = Uniform::from(2600.0..3000.0);
     //let dist_range = 600.0..800.0;
 
-    let offset = rng.gen_range(angular_offset_range);
+    let labels = ('A'..).take(num).map(|c| c.to_string());
+    let prices = (0..num).map(|_| CommodityPrices::new_random());
+    let distances = rng.sample_iter(&dist_range).take(num as usize);
+    let angles = util::random_circular_f32_distribution(num as u32, 80., 360.);
 
-    let base_angles: [f32; 3] = [0., 120., 240.];
-
-    let distances = [
-        rng.gen_range(dist_range.clone()),
-        rng.gen_range(dist_range.clone()),
-        rng.gen_range(dist_range.clone()),
-    ];
-
-    let labels = ["A".to_string(), "B".to_string(), "C".to_string()];
-
-    let prices = [
-        CommodityPrices::new_random(),
-        CommodityPrices::new_random(),
-        CommodityPrices::new_random(),
-    ];
-
-    for (base_angle, distance, label, price) in izip!(base_angles, distances, labels, prices) {
-        let angle = base_angle + offset + rng.gen_range(angular_variance_range.clone());
-
-        let pos = Vec3::new(
-            distance * angle.to_radians().cos(),
-            distance * angle.to_radians().sin(),
-            layer::PLANET,
-        );
+    for (angle, distance, label, price) in izip!(angles, distances, labels, prices) {
+        let angle = angle.to_radians();
+        let (y, x) = angle.sin_cos();
+        let pos = Vec3::new(x * distance, y * distance, layer::OBJECT);
 
         let entity = commands
             .spawn_bundle(ColorMesh2dBundle {

@@ -27,12 +27,6 @@ mod warp_node;
 
 fn main() {
     App::new()
-        .insert_resource(LogSettings {
-            filter:
-                "trace,bevy_ecs::event=debug,bevy_render=debug,wgpu_core=warn,wgpu_hal=warn,untitled-space-game=trace"
-                    .into(),
-            level: bevy::log::Level::TRACE,
-        })
         .insert_resource(ClearColor(Color::BLACK))
         .insert_resource(AssetServerSettings {
             watch_for_changes: true,

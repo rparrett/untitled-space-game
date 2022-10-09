@@ -1,7 +1,7 @@
 use bevy::{prelude::*, utils::HashMap};
 use indexmap::IndexMap;
 use itertools::izip;
-use rand::{seq::IteratorRandom, thread_rng, Rng};
+use rand::{distributions::Uniform, seq::IteratorRandom, thread_rng, Rng};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -38,6 +38,7 @@ pub struct CommodityPrices(pub IndexMap<CommodityKind, f32>);
 impl CommodityPrices {
     pub fn new_random() -> Self {
         let mut rng = thread_rng();
+
         let num = rng.gen_range(2..=3);
 
         let mut prices = IndexMap::new();
@@ -45,8 +46,11 @@ impl CommodityPrices {
         let mut commodities = CommodityKind::iter().choose_multiple(&mut rng, num);
 
         for commodity in commodities.drain(0..) {
-            let sign = if rng.gen::<bool>() { 1. } else { -1. };
-            let multiplier = 1. + rng.gen_range(1..=5) as f32 / 10. * sign;
+            let sign = rng.gen::<f32>().signum();
+
+            let pct = rng.gen_range(1..=5) as f32 / 10.;
+
+            let multiplier = 1. + pct * sign;
 
             prices.insert(commodity, multiplier);
         }
@@ -71,32 +75,20 @@ pub fn setup(
 ) {
     let mut rng = thread_rng();
 
-    let angular_variance_range = -40.0..40.0;
-    let angular_offset_range = -30.0..30.0;
-    let dist_range = 1500.0..2500.0;
-    //let dist_range = 500.0..501.0;
+    let num = 3;
 
-    let offset = rng.gen_range(angular_offset_range);
+    let dist_range = Uniform::from(1500.0..2500.0);
+    //let dist_range = Uniform::from(500.0..501.0);
 
-    let base_angles: [f32; 3] = [0., 120., 240.];
+    let amounts = util::random_u32_subdivisions(num, 100, 20);
+    let kinds = CommodityKind::iter().choose_multiple(&mut rng, num as usize);
+    let distances = rng.sample_iter(&dist_range).take(num as usize);
+    let angles = util::random_circular_f32_distribution(num, 80., 360.);
 
-    let distances = [
-        rng.gen_range(dist_range.clone()),
-        rng.gen_range(dist_range.clone()),
-        rng.gen_range(dist_range.clone()),
-    ];
-
-    let amounts = util::random_u32_subdivisions(3, 100, 20);
-    let kinds = CommodityKind::iter().choose_multiple(&mut rng, 3);
-
-    for (base_angle, distance, amount, kind) in izip!(base_angles, distances, amounts, kinds) {
-        let angle = base_angle + offset + rng.gen_range(angular_variance_range.clone());
-
-        let pos = Vec3::new(
-            distance * angle.to_radians().cos(),
-            distance * angle.to_radians().sin(),
-            layer::OBJECT,
-        );
+    for (angle, distance, amount, kind) in izip!(angles, distances, amounts, kinds) {
+        let angle = angle.to_radians();
+        let (y, x) = angle.sin_cos();
+        let pos = Vec3::new(x * distance, y * distance, layer::OBJECT);
 
         let entity = commands
             .spawn_bundle(ColorMesh2dBundle {
