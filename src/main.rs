@@ -1,5 +1,7 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
+
 use basic_laser::{BasicLaser, BasicLaserPlugin};
-use bevy::{asset::AssetServerSettings, log::LogSettings, prelude::*};
+use bevy::{asset::AssetServerSettings, prelude::*};
 use bevy_asset_loader::prelude::*;
 use commodity::{CommodityInventory, CommodityPlugin};
 use direction_indicator::{
