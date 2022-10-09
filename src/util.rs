@@ -66,7 +66,7 @@ pub fn project_onto_bounding_rectangle(dir: Vec2, min: Vec2, max: Vec2) -> Optio
 }
 
 pub fn point_in_rect(point: Vec2, min: Vec2, max: Vec2) -> bool {
-    point.x < min.x || point.x > max.x || point.y < min.y || point.y > max.y
+    !(point.x < min.x || point.x > max.x || point.y < min.y || point.y > max.y)
 }
 
 pub fn chevron(width: f32, height: f32, thickness: f32) -> Mesh {
