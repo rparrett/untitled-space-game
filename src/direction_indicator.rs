@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     layer,
     util::{self, Edge},
-    GameState, Player,
+    Fonts, GameState, Player,
 };
 
 pub struct DirectionIndicatorPlugin;
@@ -165,7 +165,7 @@ fn decorate(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     query: Query<(Entity, &DirectionIndicator), Added<DirectionIndicator>>,
-    assets: Res<AssetServer>,
+    fonts: Res<Fonts>,
 ) {
     for (entity, indicator) in query.iter() {
         let arrow = commands
@@ -178,7 +178,7 @@ fn decorate(
             .id();
 
         let style = TextStyle {
-            font: assets.load("fonts/Orbitron-Medium.ttf"),
+            font: fonts.main.clone(),
             font_size: 16.,
             color: indicator.settings.color,
         };
