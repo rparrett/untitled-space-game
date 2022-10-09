@@ -84,7 +84,7 @@ fn spawn_nodes(
     let num = 3;
 
     let dist_range = Uniform::from(2600.0..3000.0);
-    //let dist_range = 600.0..800.0;
+    //let dist_range = Uniform::from(600.0..800.0);
 
     let labels = ('A'..).take(num).map(|c| c.to_string());
     let prices = (0..num).map(|_| CommodityPrices::new_random());

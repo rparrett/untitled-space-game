@@ -36,8 +36,8 @@ impl Default for Scanner {
     }
 }
 
-pub fn reset(mut commands: Commands) {
-    commands.init_resource::<Scanner>();
+pub fn reset(mut scanner: ResMut<Scanner>) {
+    *scanner = Scanner::default();
 }
 
 pub fn update(
