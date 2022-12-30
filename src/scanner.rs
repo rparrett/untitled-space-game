@@ -20,6 +20,7 @@ impl Plugin for ScannerPlugin {
     }
 }
 
+#[derive(Resource)]
 pub struct Scanner {
     pub timer: Timer,
     pub commodities: Vec<Entity>,
@@ -29,7 +30,7 @@ pub struct Scanner {
 impl Default for Scanner {
     fn default() -> Self {
         Self {
-            timer: Timer::from_seconds(45., true),
+            timer: Timer::from_seconds(45., TimerMode::Repeating),
             commodities: Vec::new(),
             warp_nodes: Vec::new(),
         }
@@ -77,13 +78,13 @@ pub fn update(
     });
 
     if let Some((entity, _, settings)) = closest_target {
-        commands
-            .spawn()
-            .insert(DirectionIndicator {
+        commands.spawn((
+            DirectionIndicator {
                 target: entity,
                 settings: (*settings).clone(),
-            })
-            .insert(DespawnOnRestart);
+            },
+            DespawnOnRestart,
+        ));
 
         entities
             .iter()
@@ -135,13 +136,13 @@ pub fn proximity(
         let visible = ndc.x < 1. && ndc.y < 1. && ndc.x > -1. && ndc.y > -1.;
 
         if visible {
-            commands
-                .spawn()
-                .insert(DirectionIndicator {
+            commands.spawn((
+                DirectionIndicator {
                     target: entity,
                     settings: (*settings).clone(),
-                })
-                .insert(DespawnOnRestart);
+                },
+                DespawnOnRestart,
+            ));
 
             remove = Some(entity);
         }

@@ -91,18 +91,20 @@ pub fn setup(
         let pos = Vec3::new(x * distance, y * distance, layer::OBJECT);
 
         let entity = commands
-            .spawn_bundle(ColorMesh2dBundle {
-                mesh: meshes.add(shape::RegularPolygon::new(10., 5).into()).into(),
-                material: materials.add(Color::BEIGE.into()),
-                transform: Transform::from_translation(pos),
-                ..default()
-            })
-            .insert(Commodity { kind, amount })
-            .insert(DirectionIndicatorSettings {
-                color: Color::BEIGE,
-                label: None,
-            })
-            .insert(DespawnOnRestart)
+            .spawn((
+                ColorMesh2dBundle {
+                    mesh: meshes.add(shape::RegularPolygon::new(10., 5).into()).into(),
+                    material: materials.add(Color::BEIGE.into()),
+                    transform: Transform::from_translation(pos),
+                    ..default()
+                },
+                Commodity { kind, amount },
+                DirectionIndicatorSettings {
+                    color: Color::BEIGE,
+                    label: None,
+                },
+                DespawnOnRestart,
+            ))
             .id();
 
         scanner.commodities.push(entity);

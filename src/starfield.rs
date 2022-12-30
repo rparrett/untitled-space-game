@@ -29,17 +29,18 @@ fn setup(
 ) {
     let window = windows.get_primary().unwrap();
 
-    commands
-        .spawn_bundle(MaterialMesh2dBundle {
+    commands.spawn((
+        MaterialMesh2dBundle {
             mesh: meshes
                 .add(shape::Quad::new(Vec2::new(window.width(), window.height())).into())
                 .into(),
             material: mat2d.add(StarfieldMaterial::default()),
             transform: Transform::from_translation(Vec3::new(0., 0., crate::layer::BACKGROUND)),
             ..default()
-        })
-        .insert(DespawnOnRestart)
-        .insert(Starfield);
+        },
+        DespawnOnRestart,
+        Starfield,
+    ));
 }
 
 fn move_starfield(

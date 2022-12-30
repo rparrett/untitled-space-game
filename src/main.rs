@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
 use basic_laser::{BasicLaser, BasicLaserPlugin};
-use bevy::{asset::AssetServerSettings, prelude::*};
+use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use commodity::{CommodityInventory, CommodityPlugin};
 use direction_indicator::{
@@ -30,11 +30,10 @@ mod warp_node;
 fn main() {
     App::new()
         .insert_resource(ClearColor(Color::BLACK))
-        .insert_resource(AssetServerSettings {
+        .add_plugins(DefaultPlugins.set(AssetPlugin {
             watch_for_changes: true,
             ..default()
-        })
-        .add_plugins(DefaultPlugins)
+        }))
         .add_loading_state(
             LoadingState::new(GameState::Loading)
                 .continue_to_state(GameState::Playing)
@@ -84,7 +83,7 @@ enum GameState {
     Warping,
 }
 
-#[derive(AssetCollection)]
+#[derive(Resource, AssetCollection)]
 struct Fonts {
     #[asset(path = "fonts/Orbitron-Medium.ttf")]
     main: Handle<Font>,
@@ -144,7 +143,7 @@ fn spawn_player(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 
     let mut input_map = InputMap::new([
         (KeyCode::A, Action::TurnLeft),
@@ -165,38 +164,40 @@ fn spawn_player(
     ]);
 
     commands
-        .spawn_bundle(SpatialBundle {
-            transform: Transform::from_xyz(0., 0., layer::SHIP),
-            ..default()
-        })
-        .insert(Player)
-        .insert(Acceleration::default())
-        .insert(Velocity::default())
-        .insert(AngularVelocity::default())
-        .insert(Rotation(std::f32::consts::FRAC_PI_2))
-        .insert(RotationSpeed(1.))
-        .insert(Thrust(50.))
-        .insert(ThrusterStatus::None)
-        .insert(MaxVelocity(50.))
-        .insert(FuelTank {
-            current: 0,
-            max: 50,
-        })
-        .insert(Credits(0))
-        .insert(BasicLaser {
-            timer: Timer::from_seconds(1., true),
-            damage: 1.,
-        })
-        .insert(CommodityInventory::default())
-        .insert_bundle(InputManagerBundle::<Action> {
-            // Stores "which actions are currently pressed"
-            action_state: ActionState::default(),
-            // Describes how to convert from player inputs into those actions
-            input_map,
-        })
+        .spawn((
+            SpatialBundle {
+                transform: Transform::from_xyz(0., 0., layer::SHIP),
+                ..default()
+            },
+            Player,
+            Acceleration::default(),
+            Velocity::default(),
+            AngularVelocity::default(),
+            Rotation(std::f32::consts::FRAC_PI_2),
+            RotationSpeed(1.),
+            Thrust(50.),
+            ThrusterStatus::None,
+            MaxVelocity(50.),
+            FuelTank {
+                current: 0,
+                max: 50,
+            },
+            Credits(0),
+            BasicLaser {
+                timer: Timer::from_seconds(1., TimerMode::Repeating),
+                damage: 1.,
+            },
+            CommodityInventory::default(),
+            InputManagerBundle::<Action> {
+                // Stores "which actions are currently pressed"
+                action_state: ActionState::default(),
+                // Describes how to convert from player inputs into those actions
+                input_map,
+            },
+        ))
         .with_children(|parent| {
             // ship body
-            parent.spawn_bundle(ColorMesh2dBundle {
+            parent.spawn(ColorMesh2dBundle {
                 mesh: meshes.add(shape::RegularPolygon::new(20., 3).into()).into(),
                 material: materials.add(Color::RED.into()),
                 transform: Transform::from_rotation(Quat::from_rotation_z(
@@ -206,7 +207,7 @@ fn spawn_player(
             });
             // thruster
             parent
-                .spawn_bundle(ColorMesh2dBundle {
+                .spawn(ColorMesh2dBundle {
                     mesh: meshes.add(shape::RegularPolygon::new(10., 3).into()).into(),
                     material: materials.add(Color::ORANGE.into()),
                     transform: Transform::from_rotation(Quat::from_rotation_z(
@@ -226,25 +227,27 @@ fn spawn_level(
 ) {
     println!("spawn_level");
     let planet = commands
-        .spawn_bundle(ColorMesh2dBundle {
-            mesh: meshes.add(shape::Circle::new(60.).into()).into(),
-            material: materials.add(Color::AQUAMARINE.into()),
-            transform: Transform::from_xyz(0., 0., layer::PLANET),
-            ..default()
-        })
-        .insert(DespawnOnRestart)
+        .spawn((
+            ColorMesh2dBundle {
+                mesh: meshes.add(shape::Circle::new(60.).into()).into(),
+                material: materials.add(Color::AQUAMARINE.into()),
+                transform: Transform::from_xyz(0., 0., layer::PLANET),
+                ..default()
+            },
+            DespawnOnRestart,
+        ))
         .id();
 
-    commands
-        .spawn()
-        .insert(DirectionIndicator {
+    commands.spawn((
+        DirectionIndicator {
             target: planet,
             settings: DirectionIndicatorSettings {
                 color: Color::AQUAMARINE,
                 label: None,
             },
-        })
-        .insert(DespawnOnRestart);
+        },
+        DespawnOnRestart,
+    ));
 }
 
 fn sell(
@@ -393,7 +396,11 @@ fn thruster(
     for status in status_query.iter() {
         let mut thruster = thruster_query.single_mut();
 
-        thruster.is_visible = matches!(status, ThrusterStatus::Forward);
+        *thruster = if matches!(status, ThrusterStatus::Forward) {
+            Visibility::Visible
+        } else {
+            Visibility::Hidden
+        }
     }
 }
 

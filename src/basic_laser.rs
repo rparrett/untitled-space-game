@@ -40,8 +40,8 @@ fn fire(mut commands: Commands, mut query: Query<(&mut BasicLaser, &Transform)>,
         let rot = transform.rotation;
         let trans = rot.mul_vec3(Vec3::new(25., 0., 0.)) + transform.translation;
 
-        commands
-            .spawn_bundle(SpriteBundle {
+        commands.spawn((
+            SpriteBundle {
                 sprite: Sprite {
                     color: Color::YELLOW,
                     custom_size: Some(Vec2::new(10., 2.)),
@@ -50,17 +50,16 @@ fn fire(mut commands: Commands, mut query: Query<(&mut BasicLaser, &Transform)>,
                 transform: Transform::from_translation(trans.truncate().extend(layer::BULLET))
                     .with_rotation(rot),
                 ..default()
-            })
-            .insert(Origin(trans.truncate()))
-            .insert(Range(200.))
-            .insert(Bullet {
+            },
+            Origin(trans.truncate()),
+            Range(200.),
+            Bullet {
                 damage: gun.damage,
                 piercing: false,
-            })
-            .insert(Velocity(
-                rot.mul_vec3(Vec3::new(1., 0., 0.)).truncate() * 100.,
-            ))
-            .insert(DespawnOnRestart);
+            },
+            Velocity(rot.mul_vec3(Vec3::new(1., 0., 0.)).truncate() * 100.),
+            DespawnOnRestart,
+        ));
     }
 }
 

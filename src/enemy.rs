@@ -7,12 +7,13 @@ use crate::{
     fuel::SpawnFuelPelletEvent, util, DespawnOnRestart, GameState, Health, MaxVelocity, Player,
     Velocity,
 };
-
+#[derive(Resource)]
 struct RampUpTimer(Timer);
+#[derive(Resource)]
 struct SpawnTimer(Timer);
 impl Default for SpawnTimer {
     fn default() -> Self {
-        Self(Timer::from_seconds(4., true))
+        Self(Timer::from_seconds(4., TimerMode::Repeating))
     }
 }
 
@@ -22,8 +23,8 @@ pub struct Enemy;
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(SpawnTimer(Timer::from_seconds(4., true)))
-            .insert_resource(RampUpTimer(Timer::from_seconds(30., true)))
+        app.insert_resource(SpawnTimer(Timer::from_seconds(4., TimerMode::Repeating)))
+            .insert_resource(RampUpTimer(Timer::from_seconds(30., TimerMode::Repeating)))
             .add_system_set(
                 SystemSet::on_update(GameState::Playing)
                     .with_system(spawn_enemy)
@@ -59,8 +60,8 @@ fn spawn_enemy(
             .0
             + player.translation.truncate();
 
-    commands
-        .spawn_bundle(SpriteBundle {
+    commands.spawn((
+        SpriteBundle {
             transform: Transform::from_translation(pos.extend(crate::layer::SHIP)),
             sprite: Sprite {
                 color: Color::PURPLE,
@@ -68,15 +69,16 @@ fn spawn_enemy(
                 ..default()
             },
             ..default()
-        })
-        .insert(Enemy)
-        .insert(Health {
+        },
+        Enemy,
+        Health {
             current: 1.,
             max: 1.,
-        })
-        .insert(MaxVelocity(30.))
-        .insert(Velocity::default())
-        .insert(DespawnOnRestart);
+        },
+        MaxVelocity(30.),
+        Velocity::default(),
+        DespawnOnRestart,
+    ));
 }
 
 fn move_enemy(

@@ -152,9 +152,9 @@ fn update(
                     }
                 }
 
-                visibility.is_visible = true;
+                *visibility = Visibility::Visible;
             } else {
-                visibility.is_visible = false;
+                *visibility = Visibility::Hidden;
             }
         }
     }
@@ -169,12 +169,14 @@ fn decorate(
 ) {
     for (entity, indicator) in query.iter() {
         let arrow = commands
-            .spawn_bundle(ColorMesh2dBundle {
-                mesh: meshes.add(util::chevron(20., 20., 8.)).into(),
-                material: materials.add(indicator.settings.color.into()),
-                ..default()
-            })
-            .insert(DirectionIndicatorArrow)
+            .spawn((
+                ColorMesh2dBundle {
+                    mesh: meshes.add(util::chevron(20., 20., 8.)).into(),
+                    material: materials.add(indicator.settings.color.into()),
+                    ..default()
+                },
+                DirectionIndicatorArrow,
+            ))
             .id();
 
         let style = TextStyle {
@@ -190,27 +192,32 @@ fn decorate(
             .map_or_else(|| "".to_string(), |l| l.clone());
 
         let text = commands
-            .spawn_bundle(Text2dBundle {
-                text: Text::from_section(label, style.clone())
-                    .with_alignment(TextAlignment::CENTER),
-                ..default()
-            })
-            .insert(DirectionIndicatorLabel)
+            .spawn((
+                Text2dBundle {
+                    text: Text::from_section(label, style.clone())
+                        .with_alignment(TextAlignment::CENTER),
+                    ..default()
+                },
+                DirectionIndicatorLabel,
+            ))
             .id();
 
         let distance_text = commands
-            .spawn_bundle(Text2dBundle {
-                text: Text::from_section("", style.clone()).with_alignment(TextAlignment::CENTER),
-                ..default()
-            })
-            .insert(DirectionIndicatorDistanceLabel)
+            .spawn((
+                Text2dBundle {
+                    text: Text::from_section("", style.clone())
+                        .with_alignment(TextAlignment::CENTER),
+                    ..default()
+                },
+                DirectionIndicatorDistanceLabel,
+            ))
             .id();
 
         commands
             .entity(entity)
-            .insert_bundle(SpatialBundle {
+            .insert(SpatialBundle {
                 transform: Transform::from_xyz(0., 0., layer::UI),
-                visibility: Visibility { is_visible: false },
+                visibility: Visibility::Hidden,
                 ..default()
             })
             .push_children(&[arrow, text, distance_text]);

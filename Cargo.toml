@@ -6,9 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy.git" }
-leafwing_input_manager = { git = "https://github.com/Leafwing-Studios/leafwing-input-manager.git", branch = "dev" }
-bevy_asset_loader = { git = "https://github.com/NiklasEi/bevy_asset_loader.git", branch="bevy_main" }
+bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
+#leafwing_input_manager = { git = "https://github.com/Leafwing-Studios/leafwing-input-manager.git", branch = "dev" }
+leafwing-input-manager = { path = "../leafwing-input-manager" }
+#bevy_asset_loader = { git = "https://github.com/NiklasEi/bevy_asset_loader.git", branch="bevy_main" }
+bevy_asset_loader = { path = "../bevy_asset_loader/bevy_asset_loader" }
 rand = "*"
 strum = "0.24"
 strum_macros = "0.24"

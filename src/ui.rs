@@ -37,138 +37,150 @@ struct ScannerLabel;
 #[derive(Component)]
 struct WarpNodesLabel;
 
-#[derive(Default)]
+#[derive(Default, Resource)]
 struct WarpNodeDisplayOrder(Vec<Entity>);
 
 fn setup(mut commands: Commands, fonts: Res<Fonts>) {
     let container = commands
-        .spawn_bundle(NodeBundle {
-            style: Style {
-                flex_direction: FlexDirection::ColumnReverse,
-                size: Size::new(Val::Percent(100.), Val::Percent(100.)),
-                align_items: AlignItems::FlexEnd,
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    flex_direction: FlexDirection::Column,
+                    size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                    align_items: AlignItems::FlexEnd,
+                    ..default()
+                },
+                background_color: Color::NONE.into(),
                 ..default()
             },
-            color: Color::NONE.into(),
-            ..default()
-        })
-        .insert(DespawnOnRestart)
+            DespawnOnRestart,
+        ))
         .id();
 
     let fuel = commands
-        .spawn_bundle(TextBundle {
-            text: Text::from_section(
-                "FUEL 0 / 50",
-                TextStyle {
-                    font: fonts.main.clone(),
-                    font_size: 20.,
-                    color: Color::GREEN,
-                },
-            ),
-            style: Style {
-                margin: UiRect {
-                    right: Val::Px(5.),
+        .spawn((
+            TextBundle {
+                text: Text::from_section(
+                    "Fuel 0 / 50",
+                    TextStyle {
+                        font: fonts.main.clone(),
+                        font_size: 20.,
+                        color: Color::GREEN,
+                    },
+                ),
+                style: Style {
+                    margin: UiRect {
+                        right: Val::Px(5.),
+                        ..default()
+                    },
                     ..default()
                 },
                 ..default()
             },
-            ..default()
-        })
-        .insert(FuelLabel)
+            FuelLabel,
+        ))
         .id();
 
     let credits = commands
-        .spawn_bundle(TextBundle {
-            text: Text::from_section(
-                "CREDS 0",
-                TextStyle {
-                    font: fonts.main.clone(),
-                    font_size: 20.,
-                    color: Color::WHITE,
-                },
-            ),
-            style: Style {
-                margin: UiRect {
-                    right: Val::Px(5.),
+        .spawn((
+            TextBundle {
+                text: Text::from_section(
+                    "Creds 0",
+                    TextStyle {
+                        font: fonts.main.clone(),
+                        font_size: 20.,
+                        color: Color::YELLOW,
+                    },
+                ),
+                style: Style {
+                    margin: UiRect {
+                        right: Val::Px(5.),
+                        ..default()
+                    },
                     ..default()
                 },
                 ..default()
             },
-            ..default()
-        })
-        .insert(CreditsLabel)
+            CreditsLabel,
+        ))
         .id();
 
     let comm = commands
-        .spawn_bundle(TextBundle {
-            text: Text::from_section(
-                "",
-                TextStyle {
-                    font: fonts.main.clone(),
-                    font_size: 20.,
-                    color: Color::BEIGE,
-                },
-            )
-            .with_alignment(TextAlignment::CENTER_RIGHT),
-            style: Style {
-                margin: UiRect {
-                    top: Val::Px(10.),
-                    right: Val::Px(5.),
+        .spawn((
+            TextBundle {
+                text: Text::from_section(
+                    "",
+                    TextStyle {
+                        font: fonts.main.clone(),
+                        font_size: 20.,
+                        color: Color::BEIGE,
+                    },
+                )
+                .with_alignment(TextAlignment::CENTER_RIGHT),
+                style: Style {
+                    margin: UiRect {
+                        top: Val::Px(10.),
+                        right: Val::Px(5.),
+                        ..default()
+                    },
                     ..default()
                 },
                 ..default()
             },
-            ..default()
-        })
-        .insert(CommodityInventoryLabel)
+            CommodityInventoryLabel,
+        ))
         .id();
 
     let warp_nodes = commands
-        .spawn_bundle(TextBundle {
-            text: Text::from_section(
-                "",
-                TextStyle {
-                    font: fonts.main.clone(),
-                    font_size: 20.,
-                    color: Color::ORANGE,
-                },
-            )
-            .with_alignment(TextAlignment::CENTER_RIGHT),
-            style: Style {
-                margin: UiRect {
-                    top: Val::Px(10.),
-                    right: Val::Px(5.),
+        .spawn((
+            TextBundle {
+                text: Text::from_section(
+                    "",
+                    TextStyle {
+                        font: fonts.main.clone(),
+                        font_size: 20.,
+                        color: Color::ORANGE,
+                    },
+                )
+                .with_alignment(TextAlignment::CENTER_RIGHT),
+                style: Style {
+                    margin: UiRect {
+                        top: Val::Px(10.),
+                        right: Val::Px(5.),
+                        ..default()
+                    },
                     ..default()
                 },
                 ..default()
             },
-            ..default()
-        })
-        .insert(WarpNodesLabel)
+            WarpNodesLabel,
+        ))
         .id();
 
     let scanner = commands
-        .spawn_bundle(TextBundle {
-            text: Text::from_section(
-                "",
-                TextStyle {
-                    font: fonts.main.clone(),
-                    font_size: 20.,
-                    color: Color::BEIGE,
-                },
-            )
-            .with_alignment(TextAlignment::CENTER_RIGHT),
-            style: Style {
-                margin: UiRect {
-                    top: Val::Px(10.),
-                    right: Val::Px(5.),
+        .spawn((
+            TextBundle {
+                text: Text::from_section(
+                    "",
+                    TextStyle {
+                        font: fonts.main.clone(),
+                        font_size: 20.,
+                        color: Color::BEIGE,
+                    },
+                )
+                .with_alignment(TextAlignment::CENTER_RIGHT),
+                style: Style {
+                    margin: UiRect {
+                        top: Val::Px(10.),
+                        right: Val::Px(5.),
+                        ..default()
+                    },
                     ..default()
                 },
                 ..default()
             },
-            ..default()
-        })
-        .insert(ScannerLabel)
+            ScannerLabel,
+        ))
         .id();
 
     commands
@@ -182,7 +194,7 @@ fn update_fuel(
 ) {
     for fuel in query.iter() {
         for mut label in label_query.iter_mut() {
-            label.sections[0].value = format!("FUEL {} / {}", fuel.current, fuel.max);
+            label.sections[0].value = format!("Fuel {} / {}", fuel.current, fuel.max);
         }
     }
 }
@@ -193,7 +205,7 @@ fn update_credits(
 ) {
     for credits in query.iter() {
         for mut label in label_query.iter_mut() {
-            label.sections[0].value = format!("CREDS {}", credits.0);
+            label.sections[0].value = format!("Creds {}", credits.0);
         }
     }
 }

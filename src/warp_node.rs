@@ -32,6 +32,7 @@ pub struct WarpNode;
 #[derive(Component)]
 pub struct WarpFadeSprite;
 
+#[derive(Resource)]
 pub struct WarpAnimation {
     pub starfield_timer: Timer,
     pub fade_out_timer: Timer,
@@ -53,17 +54,17 @@ impl WarpAnimation {
 
 impl Default for WarpAnimation {
     fn default() -> Self {
-        let mut fade_out_timer = Timer::from_seconds(3., false);
+        let mut fade_out_timer = Timer::from_seconds(3., TimerMode::Once);
         fade_out_timer.pause();
 
-        let mut fade_in_timer = Timer::from_seconds(3., false);
+        let mut fade_in_timer = Timer::from_seconds(3., TimerMode::Once);
         fade_in_timer.pause();
 
-        let mut fade_dwell_timer = Timer::from_seconds(1., false);
+        let mut fade_dwell_timer = Timer::from_seconds(1., TimerMode::Once);
         fade_dwell_timer.pause();
 
         Self {
-            starfield_timer: Timer::from_seconds(3., false),
+            starfield_timer: Timer::from_seconds(3., TimerMode::Once),
             fade_out_timer,
             fade_dwell_timer,
             fade_in_timer,
@@ -71,6 +72,7 @@ impl Default for WarpAnimation {
     }
 }
 
+#[derive(Resource)]
 pub struct WarpedTo(pub CommodityPrices);
 
 fn spawn_nodes(
@@ -97,27 +99,29 @@ fn spawn_nodes(
         let pos = Vec3::new(x * distance, y * distance, layer::OBJECT);
 
         let entity = commands
-            .spawn_bundle(ColorMesh2dBundle {
-                mesh: meshes.add(shape::Circle::new(80.).into()).into(),
-                material: materials.add(
-                    Color::Rgba {
-                        red: 0.15,
-                        blue: 0.15,
-                        green: 0.15,
-                        alpha: 0.2,
-                    }
-                    .into(),
-                ),
-                transform: Transform::from_translation(pos),
-                ..default()
-            })
-            .insert(WarpNode)
-            .insert(price)
-            .insert(DirectionIndicatorSettings {
-                color: Color::ORANGE,
-                label: Some(label),
-            })
-            .insert(DespawnOnRestart)
+            .spawn((
+                ColorMesh2dBundle {
+                    mesh: meshes.add(shape::Circle::new(80.).into()).into(),
+                    material: materials.add(
+                        Color::Rgba {
+                            red: 0.15,
+                            blue: 0.15,
+                            green: 0.15,
+                            alpha: 0.2,
+                        }
+                        .into(),
+                    ),
+                    transform: Transform::from_translation(pos),
+                    ..default()
+                },
+                WarpNode,
+                price,
+                DirectionIndicatorSettings {
+                    color: Color::ORANGE,
+                    label: Some(label),
+                },
+                DespawnOnRestart,
+            ))
             .id();
 
         scanner.warp_nodes.push(entity);
@@ -166,8 +170,8 @@ fn warp(
     if animation.starfield_timer.just_finished() {
         animation.fade_out_timer.unpause();
 
-        commands
-            .spawn_bundle(SpriteBundle {
+        commands.spawn((
+            SpriteBundle {
                 sprite: Sprite {
                     color: Color::NONE,
                     custom_size: Some(Vec2::new(
@@ -178,8 +182,9 @@ fn warp(
                 },
                 transform: Transform::from_xyz(0., 0., layer::FADE),
                 ..default()
-            })
-            .insert(WarpFadeSprite);
+            },
+            WarpFadeSprite,
+        ));
     }
 
     animation.fade_out_timer.tick(time.delta());

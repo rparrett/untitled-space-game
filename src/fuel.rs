@@ -28,8 +28,8 @@ fn spawn(
     mut events: EventReader<SpawnFuelPelletEvent>,
 ) {
     for event in events.iter() {
-        commands
-            .spawn_bundle(ColorMesh2dBundle {
+        commands.spawn((
+            ColorMesh2dBundle {
                 mesh: meshes
                     .add(
                         shape::RegularPolygon {
@@ -42,12 +42,13 @@ fn spawn(
                 material: materials.add(Color::GREEN.into()),
                 transform: Transform::from_translation(event.location.extend(layer::OBJECT)),
                 ..default()
-            })
-            .insert(Velocity::default())
-            .insert(Acceleration::default())
-            .insert(MaxVelocity(300.))
-            .insert(FuelPellet)
-            .insert(DespawnOnRestart);
+            },
+            Velocity::default(),
+            Acceleration::default(),
+            MaxVelocity(300.),
+            FuelPellet,
+            DespawnOnRestart,
+        ));
     }
 }
 
