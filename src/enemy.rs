@@ -1,11 +1,12 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
+use bevy_spatial::{DefaultParams, RTreeAccess2D, SpatialAccess};
 use rand::{thread_rng, Rng};
 
 use crate::{
     fuel::SpawnFuelPelletEvent, util, DespawnOnRestart, GameState, Health, MaxVelocity, Player,
-    Velocity,
+    SpatialIndex, Velocity,
 };
 #[derive(Resource)]
 struct RampUpTimer(Timer);
@@ -13,7 +14,7 @@ struct RampUpTimer(Timer);
 struct SpawnTimer(Timer);
 impl Default for SpawnTimer {
     fn default() -> Self {
-        Self(Timer::from_seconds(4., TimerMode::Repeating))
+        Self(Timer::from_seconds(0.4, TimerMode::Repeating))
     }
 }
 
@@ -23,7 +24,7 @@ pub struct Enemy;
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(SpawnTimer(Timer::from_seconds(4., TimerMode::Repeating)))
+        app.insert_resource(SpawnTimer::default())
             .insert_resource(RampUpTimer(Timer::from_seconds(30., TimerMode::Repeating)))
             .add_system_set(
                 SystemSet::on_update(GameState::Playing)
@@ -77,6 +78,7 @@ fn spawn_enemy(
         },
         MaxVelocity(30.),
         Velocity::default(),
+        SpatialIndex,
         DespawnOnRestart,
     ));
 }
@@ -84,11 +86,29 @@ fn spawn_enemy(
 fn move_enemy(
     player_query: Query<&Transform, With<Player>>,
     mut enemy_query: Query<(&mut Velocity, &MaxVelocity, &Transform), With<Enemy>>,
+    index: Res<RTreeAccess2D<SpatialIndex, DefaultParams>>,
 ) {
     let player = player_query.single();
 
     for (mut velocity, max_velocity, transform) in enemy_query.iter_mut() {
-        let diff = player.translation.truncate() - transform.translation.truncate();
+        let mut diff =
+            (player.translation.truncate() - transform.translation.truncate()).normalize();
+
+        let mut test = index
+            .k_nearest_neighbour(transform.translation, 2)
+            .iter()
+            .skip(1)
+            .map(|(l, _)| l)
+            .fold(Vec3::ZERO, |mut acc, l| {
+                let dist = (transform.translation - *l).length();
+                if dist < 30. {
+                    acc += (transform.translation - *l).normalize();
+                }
+                acc
+            });
+
+        diff *= 5.;
+        diff += test.truncate();
 
         velocity.0 = diff.normalize() * max_velocity.0;
     }

@@ -3,6 +3,7 @@
 use basic_laser::{BasicLaser, BasicLaserPlugin};
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
+use bevy_spatial::{DefaultParams, RTreeAccess2D, RTreePlugin2D, SpatialAccess};
 use commodity::{CommodityInventory, CommodityPlugin};
 use direction_indicator::{
     DirectionIndicator, DirectionIndicatorPlugin, DirectionIndicatorSettings,
@@ -41,6 +42,7 @@ fn main() {
         )
         .add_state(GameState::Loading)
         .add_plugin(InputManagerPlugin::<Action>::default())
+        .add_plugin(RTreePlugin2D::<SpatialIndex, DefaultParams> { ..default() })
         .add_plugin(StarfieldPlugin)
         .add_plugin(BasicLaserPlugin)
         .add_plugin(EnemyPlugin)
@@ -137,6 +139,9 @@ struct Credits(u32);
 
 #[derive(Component)]
 struct DespawnOnRestart;
+
+#[derive(Component)]
+struct SpatialIndex;
 
 fn spawn_player(
     mut commands: Commands,

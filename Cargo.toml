@@ -11,6 +11,7 @@ bevy = { git = "https://github.com/bevyengine/bevy.git", branch = "main" }
 leafwing-input-manager = { path = "../leafwing-input-manager" }
 #bevy_asset_loader = { git = "https://github.com/NiklasEi/bevy_asset_loader.git", branch="bevy_main" }
 bevy_asset_loader = { path = "../bevy_asset_loader/bevy_asset_loader" }
+bevy_spatial = { path = "../bevy-spatial", features = ["rstar"] }
 rand = "*"
 strum = "0.24"
 strum_macros = "0.24"
