@@ -14,7 +14,14 @@ struct RampUpTimer(Timer);
 struct SpawnTimer(Timer);
 impl Default for SpawnTimer {
     fn default() -> Self {
-        Self(Timer::from_seconds(0.4, TimerMode::Repeating))
+        Self(Timer::from_seconds(2.0, TimerMode::Repeating))
+    }
+}
+#[derive(Resource, Deref)]
+struct MaxEnemies(usize);
+impl Default for MaxEnemies {
+    fn default() -> Self {
+        Self(500)
     }
 }
 
@@ -24,7 +31,8 @@ pub struct Enemy;
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(SpawnTimer::default())
+        app.insert_resource(MaxEnemies::default())
+            .insert_resource(SpawnTimer::default())
             .insert_resource(RampUpTimer(Timer::from_seconds(30., TimerMode::Repeating)))
             .add_system_set(
                 SystemSet::on_update(GameState::Playing)
@@ -40,8 +48,10 @@ impl Plugin for EnemyPlugin {
 fn spawn_enemy(
     mut commands: Commands,
     mut timer: ResMut<SpawnTimer>,
+    max: Res<MaxEnemies>,
     time: Res<Time>,
     player_query: Query<&Transform, With<Player>>,
+    enemy_query: Query<(), With<Enemy>>,
 ) {
     timer.0.tick(time.delta());
     if !timer.0.just_finished() {
@@ -49,6 +59,11 @@ fn spawn_enemy(
     }
 
     let player = player_query.single();
+
+    let enemies = enemy_query.iter().len();
+    if enemies > **max {
+        return;
+    }
 
     // TODO hardcoded based on screen size
     let spawn_bounds = Vec2::new(700., 410.);
@@ -91,26 +106,25 @@ fn move_enemy(
     let player = player_query.single();
 
     for (mut velocity, max_velocity, transform) in enemy_query.iter_mut() {
-        let mut diff =
-            (player.translation.truncate() - transform.translation.truncate()).normalize();
+        // run away from other enemies if they are too close
+        // otherwise, run towards player
 
-        let mut test = index
+        let nearest = index
             .k_nearest_neighbour(transform.translation, 2)
             .iter()
             .skip(1)
-            .map(|(l, _)| l)
-            .fold(Vec3::ZERO, |mut acc, l| {
-                let dist = (transform.translation - *l).length();
-                if dist < 30. {
-                    acc += (transform.translation - *l).normalize();
-                }
-                acc
-            });
+            .map(|(l, _)| *l - transform.translation)
+            .filter(|l| l.length_squared() < 900.)
+            .next();
 
-        diff *= 5.;
-        diff += test.truncate();
+        let mut dir =
+            (player.translation.truncate() - transform.translation.truncate()).normalize();
 
-        velocity.0 = diff.normalize() * max_velocity.0;
+        if let Some(diff) = nearest {
+            dir += -diff.truncate().normalize();
+        };
+
+        velocity.0 = dir * max_velocity.0;
     }
 }
 
@@ -127,14 +141,23 @@ fn ramp_up(time: Res<Time>, mut spawn: ResMut<SpawnTimer>, mut ramp: ResMut<Ramp
 fn despawn(
     mut commands: Commands,
     query: Query<(Entity, &Health, &Transform), With<Enemy>>,
+    player_query: Query<&Transform, With<Player>>,
     mut events: EventWriter<SpawnFuelPelletEvent>,
 ) {
+    let player = player_query.single();
+
     for (entity, health, transform) in query.iter() {
         if health.current < health.max {
             commands.entity(entity).despawn();
             events.send(SpawnFuelPelletEvent {
                 location: transform.translation.truncate(),
             });
+            continue;
+        }
+        let dist =
+            (transform.translation.truncate() - player.translation.truncate()).length_squared();
+        if dist > 490_000.0 {
+            commands.entity(entity).despawn();
             continue;
         }
     }

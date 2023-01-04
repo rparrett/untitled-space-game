@@ -3,7 +3,7 @@
 use basic_laser::{BasicLaser, BasicLaserPlugin};
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
-use bevy_spatial::{DefaultParams, RTreeAccess2D, RTreePlugin2D, SpatialAccess};
+use bevy_spatial::{DefaultParams, RTreePlugin2D};
 use commodity::{CommodityInventory, CommodityPlugin};
 use direction_indicator::{
     DirectionIndicator, DirectionIndicatorPlugin, DirectionIndicatorSettings,
