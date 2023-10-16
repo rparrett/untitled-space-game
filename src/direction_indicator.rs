@@ -9,16 +9,12 @@ use crate::{
 pub struct DirectionIndicatorPlugin;
 impl Plugin for DirectionIndicatorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(
-            SystemSet::on_update(GameState::Playing)
-                .with_system(update.after(crate::movement))
-                .with_system(decorate),
+        app.add_system(
+            update
+                .in_set(OnUpdate(GameState::Playing))
+                .after(crate::movement),
         );
-        app.add_system_set(
-            SystemSet::on_update(GameState::Warping)
-                .with_system(update.after(crate::movement))
-                .with_system(decorate),
-        );
+        app.add_system(decorate.in_set(OnUpdate(GameState::Playing)));
     }
 }
 
@@ -195,7 +191,7 @@ fn decorate(
             .spawn((
                 Text2dBundle {
                     text: Text::from_section(label, style.clone())
-                        .with_alignment(TextAlignment::CENTER),
+                        .with_alignment(TextAlignment::Center),
                     ..default()
                 },
                 DirectionIndicatorLabel,
@@ -206,7 +202,7 @@ fn decorate(
             .spawn((
                 Text2dBundle {
                     text: Text::from_section("", style.clone())
-                        .with_alignment(TextAlignment::CENTER),
+                        .with_alignment(TextAlignment::Center),
                     ..default()
                 },
                 DirectionIndicatorDistanceLabel,

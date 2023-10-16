@@ -7,11 +7,8 @@ use crate::{
 pub struct FuelPlugin;
 impl Plugin for FuelPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<SpawnFuelPelletEvent>().add_system_set(
-            SystemSet::on_update(GameState::Playing)
-                .with_system(movement)
-                .with_system(spawn),
-        );
+        app.add_event::<SpawnFuelPelletEvent>();
+        app.add_systems((movement, spawn).in_set(OnUpdate(GameState::Playing)));
     }
 }
 

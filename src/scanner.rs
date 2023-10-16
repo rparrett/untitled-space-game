@@ -9,14 +9,9 @@ use crate::{
 pub struct ScannerPlugin;
 impl Plugin for ScannerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_exit(GameState::Warping).with_system(reset))
-            .init_resource::<Scanner>()
-            .add_system_set(
-                SystemSet::on_update(GameState::Playing)
-                    .with_system(proximity)
-                    .with_system(update)
-                    .with_system(unpause),
-            );
+        app.init_resource::<Scanner>();
+        app.add_system(reset.in_schedule(OnExit(GameState::Warping)));
+        app.add_systems((proximity, update, unpause).in_set(OnUpdate(GameState::Playing)));
     }
 }
 

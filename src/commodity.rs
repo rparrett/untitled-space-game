@@ -62,8 +62,8 @@ impl CommodityPrices {
 pub struct CommodityPlugin;
 impl Plugin for CommodityPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(GameState::Playing).with_system(setup))
-            .add_system_set(SystemSet::on_update(GameState::Playing).with_system(pickup));
+        app.add_system(setup.in_schedule(OnEnter(GameState::Playing)));
+        app.add_system(pickup.in_set(OnUpdate(GameState::Playing)));
     }
 }
 

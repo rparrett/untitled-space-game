@@ -3,6 +3,7 @@ use bevy::{
     reflect::TypeUuid,
     render::render_resource::{AsBindGroup, ShaderRef},
     sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle},
+    window::PrimaryWindow,
 };
 use interpolation::Ease;
 
@@ -14,10 +15,9 @@ struct Starfield;
 
 impl Plugin for StarfieldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(Material2dPlugin::<StarfieldMaterial>::default())
-            .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(setup))
-            .add_system_set(SystemSet::on_update(GameState::Playing).with_system(move_starfield))
-            .add_system_set(SystemSet::on_update(GameState::Warping).with_system(warp_animation));
+        app.add_plugin(Material2dPlugin::<StarfieldMaterial>::default());
+        app.add_system(setup.in_schedule(OnEnter(GameState::Playing)));
+        app.add_systems((move_starfield, warp_animation).in_set(OnUpdate(GameState::Playing)));
     }
 }
 
@@ -25,9 +25,9 @@ fn setup(
     mut commands: Commands,
     mut mat2d: ResMut<Assets<StarfieldMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    windows: Res<Windows>,
+    windows: Query<&Window, With<PrimaryWindow>>,
 ) {
-    let window = windows.get_primary().unwrap();
+    let window = windows.single();
 
     commands.spawn((
         MaterialMesh2dBundle {

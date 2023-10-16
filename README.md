@@ -25,3 +25,5 @@ When the player dies they can spend (some sort of points that they earned someho
 ## TODO
 
 - Add shopping screen
+- The warp animation is severely busted after the bevy 0.10 upgrade
+- Bevy 0.10's scheduling APIs are so crazy that I think upgrading to bevy 0.11 before fixing that makes sense

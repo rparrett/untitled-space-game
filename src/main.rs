@@ -3,7 +3,7 @@
 use basic_laser::{BasicLaser, BasicLaserPlugin};
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
-use bevy_spatial::{DefaultParams, RTreePlugin2D};
+use bevy_spatial::{AutomaticUpdate, SpatialStructure};
 use commodity::{CommodityInventory, CommodityPlugin};
 use direction_indicator::{
     DirectionIndicator, DirectionIndicatorPlugin, DirectionIndicatorSettings,
@@ -35,14 +35,15 @@ fn main() {
             watch_for_changes: true,
             ..default()
         }))
+        .add_state::<GameState>()
         .add_loading_state(
-            LoadingState::new(GameState::Loading)
-                .continue_to_state(GameState::Playing)
-                .with_collection::<Fonts>(),
+            LoadingState::new(GameState::Loading).continue_to_state(GameState::Playing),
         )
-        .add_state(GameState::Loading)
+        .add_collection_to_loading_state::<_, Fonts>(GameState::Loading)
         .add_plugin(InputManagerPlugin::<Action>::default())
-        .add_plugin(RTreePlugin2D::<SpatialIndex, DefaultParams> { ..default() })
+        .add_plugin(
+            AutomaticUpdate::<SpatialIndex>::new().with_spatial_ds(SpatialStructure::KDTree2),
+        )
         .add_plugin(StarfieldPlugin)
         .add_plugin(BasicLaserPlugin)
         .add_plugin(EnemyPlugin)
@@ -52,34 +53,36 @@ fn main() {
         .add_plugin(ScannerPlugin)
         .add_plugin(WarpNodePlugin)
         .add_plugin(UiPlugin)
-        .add_system_set(SystemSet::on_exit(GameState::Loading).with_system(spawn_player))
-        .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_level))
-        .add_system_set(
-            SystemSet::on_update(GameState::Playing)
-                .with_system(player_input)
-                .with_system(thruster.before(acceleration))
-                .with_system(acceleration.before(apply_acceleration))
-                .with_system(apply_acceleration.before(movement))
-                .with_system(rotation.before(movement))
-                .with_system(movement)
-                .with_system(move_camera.after(movement)),
+        .add_system(spawn_player.in_schedule(OnExit(GameState::Loading)))
+        .add_system(spawn_level.in_schedule(OnEnter(GameState::Playing)))
+        .add_systems(
+            (
+                player_input,
+                thruster.before(acceleration),
+                acceleration.before(apply_acceleration),
+                apply_acceleration.before(movement),
+                rotation.before(movement),
+                movement,
+                move_camera.after(movement),
+            )
+                .in_set(OnUpdate(GameState::Playing))
+                .in_set(MovementSet),
         )
-        .add_system_set(
-            SystemSet::on_update(GameState::Warping)
-                .with_system(warp_movement)
-                .with_system(move_camera.after(warp_movement)),
+        .add_systems(
+            (warp_movement, move_camera.after(warp_movement))
+                .in_set(OnUpdate(GameState::Warping))
+                .in_set(MovementSet),
         )
-        .add_system_set(
-            SystemSet::on_exit(GameState::Warping)
-                .with_system(cleanup)
-                .with_system(sell)
-                .with_system(reset_player),
-        )
+        .add_systems((cleanup, sell, reset_player).in_schedule(OnExit(GameState::Playing)))
         .run();
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, SystemSet)]
+pub struct MovementSet;
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
 enum GameState {
+    #[default]
     Loading,
     Playing,
     Warping,

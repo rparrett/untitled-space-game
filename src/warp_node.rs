@@ -1,29 +1,27 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PrimaryWindow};
 use interpolation::Ease;
 use itertools::izip;
 use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
     commodity::CommodityPrices, direction_indicator::DirectionIndicatorSettings, layer,
-    move_camera, scanner::Scanner, util, DespawnOnRestart, FuelTank, GameState, Player,
+    move_camera, scanner::Scanner, util, DespawnOnRestart, FuelTank, GameState, MovementSet,
+    Player,
 };
 
 pub struct WarpNodePlugin;
 impl Plugin for WarpNodePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(WarpAnimation::default())
-            .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_nodes))
-            .add_system_set(
-                SystemSet::on_update(GameState::Playing)
-                    .with_system(start_warp)
-                    .with_system(end_warp)
-                    .with_system(move_fade_sprite.after(move_camera)),
-            )
-            .add_system_set(
-                SystemSet::on_update(GameState::Warping)
-                    .with_system(warp)
-                    .with_system(move_fade_sprite.after(move_camera)),
-            );
+        app.insert_resource(WarpAnimation::default());
+
+        app.add_system(spawn_nodes.in_schedule(OnEnter(GameState::Playing)));
+        app.add_systems(
+            (start_warp, end_warp, move_fade_sprite.after(MovementSet))
+                .in_set(OnUpdate(GameState::Playing)),
+        );
+        app.add_systems(
+            (warp, move_fade_sprite.after(MovementSet)).in_set(OnUpdate(GameState::Warping)),
+        );
     }
 }
 
@@ -132,7 +130,7 @@ fn start_warp(
     mut commands: Commands,
     query: Query<(&Transform, &CommodityPrices), With<WarpNode>>,
     query_player: Query<(&Transform, &FuelTank), With<Player>>,
-    mut state: ResMut<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
     mut animation: ResMut<WarpAnimation>,
 ) {
     let (player_transform, fuel_tank) = query_player.single();
@@ -149,7 +147,7 @@ fn start_warp(
         if dist < 80. {
             animation.starfield_timer.reset();
 
-            let _ = state.overwrite_set(GameState::Warping);
+            next_state.set(GameState::Warping);
 
             commands.insert_resource(WarpedTo(prices.clone()));
 
@@ -160,24 +158,23 @@ fn start_warp(
 
 fn warp(
     mut commands: Commands,
-    windows: Res<Windows>,
+    windows: Query<&Window, With<PrimaryWindow>>,
     time: Res<Time>,
     mut animation: ResMut<WarpAnimation>,
     mut fade_sprite_query: Query<&mut Sprite, With<WarpFadeSprite>>,
-    mut state: ResMut<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
     animation.starfield_timer.tick(time.delta());
     if animation.starfield_timer.just_finished() {
         animation.fade_out_timer.unpause();
 
+        let window = windows.single();
+
         commands.spawn((
             SpriteBundle {
                 sprite: Sprite {
                     color: Color::NONE,
-                    custom_size: Some(Vec2::new(
-                        windows.get_primary().unwrap().width(),
-                        windows.get_primary().unwrap().height(),
-                    )),
+                    custom_size: Some(Vec2::new(window.width(), window.height())),
                     ..default()
                 },
                 transform: Transform::from_xyz(0., 0., layer::FADE),
@@ -201,7 +198,7 @@ fn warp(
     if animation.fade_dwell_timer.just_finished() {
         animation.fade_in_timer.unpause();
 
-        let _ = state.overwrite_set(GameState::Playing); // XXX shopping
+        next_state.set(GameState::Playing); // XXX shopping
     }
 }
 

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use bevy::prelude::*;
-use bevy_spatial::{DefaultParams, RTreeAccess2D, SpatialAccess};
+use bevy_spatial::{kdtree::KDTree2, SpatialAccess};
 use rand::{thread_rng, Rng};
 
 use crate::{
@@ -33,15 +33,13 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(MaxEnemies::default())
             .insert_resource(SpawnTimer::default())
-            .insert_resource(RampUpTimer(Timer::from_seconds(30., TimerMode::Repeating)))
-            .add_system_set(
-                SystemSet::on_update(GameState::Playing)
-                    .with_system(spawn_enemy)
-                    .with_system(move_enemy)
-                    .with_system(ramp_up)
-                    .with_system(despawn),
-            )
-            .add_system_set(SystemSet::on_exit(GameState::Warping).with_system(reset_timers));
+            .insert_resource(RampUpTimer(Timer::from_seconds(30., TimerMode::Repeating)));
+
+        app.add_systems(
+            (spawn_enemy, move_enemy, ramp_up, despawn).in_set(OnUpdate(GameState::Playing)),
+        );
+
+        app.add_system(reset_timers.in_schedule(OnExit(GameState::Warping)));
     }
 }
 
@@ -101,7 +99,7 @@ fn spawn_enemy(
 fn move_enemy(
     player_query: Query<&Transform, With<Player>>,
     mut enemy_query: Query<(&mut Velocity, &MaxVelocity, &Transform), With<Enemy>>,
-    index: Res<RTreeAccess2D<SpatialIndex, DefaultParams>>,
+    tree: Res<KDTree2<SpatialIndex>>,
 ) {
     let player = player_query.single();
 
@@ -109,11 +107,11 @@ fn move_enemy(
         // run away from other enemies if they are too close
         // otherwise, run towards player
 
-        let nearest = index
-            .k_nearest_neighbour(transform.translation, 2)
+        let nearest = tree
+            .k_nearest_neighbour(transform.translation.truncate(), 2)
             .iter()
             .skip(1)
-            .map(|(l, _)| *l - transform.translation)
+            .map(|(l, _)| *l - transform.translation.truncate())
             .filter(|l| l.length_squared() < 900.)
             .next();
 
@@ -121,7 +119,7 @@ fn move_enemy(
             (player.translation.truncate() - transform.translation.truncate()).normalize();
 
         if let Some(diff) = nearest {
-            dir += -diff.truncate().normalize();
+            dir += -diff.normalize();
         };
 
         velocity.0 = dir * max_velocity.0;

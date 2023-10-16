@@ -12,17 +12,20 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(WarpNodeDisplayOrder::default())
-            .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(setup))
-            .add_system_set(
-                SystemSet::on_update(GameState::Playing)
-                    .with_system(update_fuel)
-                    .with_system(update_credits)
-                    .with_system(update_commodity_inventory)
-                    .with_system(update_scanner.after(scanner::update))
-                    .with_system(track_warp_nodes)
-                    .with_system(update_warp_nodes),
-            );
+        app.insert_resource(WarpNodeDisplayOrder::default());
+        app.add_system(setup.in_schedule(OnEnter(GameState::Playing)));
+
+        app.add_systems(
+            (
+                update_fuel,
+                update_credits,
+                update_commodity_inventory,
+                update_scanner.after(scanner::update),
+                track_warp_nodes,
+                update_warp_nodes,
+            )
+                .in_set(OnUpdate(GameState::Playing)),
+        );
     }
 }
 
@@ -116,7 +119,7 @@ fn setup(mut commands: Commands, fonts: Res<Fonts>) {
                         color: Color::BEIGE,
                     },
                 )
-                .with_alignment(TextAlignment::CENTER_RIGHT),
+                .with_alignment(TextAlignment::Right),
                 style: Style {
                     margin: UiRect {
                         top: Val::Px(10.),
@@ -142,7 +145,7 @@ fn setup(mut commands: Commands, fonts: Res<Fonts>) {
                         color: Color::ORANGE,
                     },
                 )
-                .with_alignment(TextAlignment::CENTER_RIGHT),
+                .with_alignment(TextAlignment::Right),
                 style: Style {
                     margin: UiRect {
                         top: Val::Px(10.),
@@ -168,7 +171,7 @@ fn setup(mut commands: Commands, fonts: Res<Fonts>) {
                         color: Color::BEIGE,
                     },
                 )
-                .with_alignment(TextAlignment::CENTER_RIGHT),
+                .with_alignment(TextAlignment::Right),
                 style: Style {
                     margin: UiRect {
                         top: Val::Px(10.),
