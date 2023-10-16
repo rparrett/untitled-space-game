@@ -25,7 +25,7 @@ pub struct Scanner {
 impl Default for Scanner {
     fn default() -> Self {
         Self {
-            timer: Timer::from_seconds(45., TimerMode::Repeating),
+            timer: Timer::from_seconds(35., TimerMode::Repeating),
             commodities: Vec::new(),
             warp_nodes: Vec::new(),
         }
