@@ -17,7 +17,8 @@ impl Plugin for StarfieldPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(Material2dPlugin::<StarfieldMaterial>::default());
         app.add_system(setup.in_schedule(OnEnter(GameState::Playing)));
-        app.add_systems((move_starfield, warp_animation).in_set(OnUpdate(GameState::Playing)));
+        app.add_system(move_starfield.in_set(OnUpdate(GameState::Playing)));
+        app.add_system(warp_animation.in_set(OnUpdate(GameState::Warping)));
     }
 }
 
