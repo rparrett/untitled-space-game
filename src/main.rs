@@ -73,7 +73,7 @@ fn main() {
                 .in_set(OnUpdate(GameState::Warping))
                 .in_set(MovementSet),
         )
-        .add_systems((cleanup, sell, reset_player).in_schedule(OnExit(GameState::Playing)))
+        .add_systems((cleanup, sell, reset_player).in_schedule(OnExit(GameState::Warping)))
         .run();
 }
 
