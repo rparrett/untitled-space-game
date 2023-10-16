@@ -47,12 +47,12 @@ fn fire(mut commands: Commands, mut query: Query<(&mut BasicLaser, &Transform)>,
                 ..default()
             },
             Origin(trans.truncate()),
-            Range(200.),
+            Range(400.),
             Bullet {
                 damage: gun.damage,
                 piercing: false,
             },
-            Velocity(rot.mul_vec3(Vec3::new(1., 0., 0.)).truncate() * 100.),
+            Velocity(rot.mul_vec3(Vec3::new(1., 0., 0.)).truncate() * 300.),
             DespawnOnRestart,
         ));
     }

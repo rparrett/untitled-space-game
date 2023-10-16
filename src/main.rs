@@ -182,10 +182,10 @@ fn spawn_player(
             Velocity::default(),
             AngularVelocity::default(),
             Rotation(std::f32::consts::FRAC_PI_2),
-            RotationSpeed(1.),
-            Thrust(50.),
+            RotationSpeed(2.),
+            Thrust(100.),
             ThrusterStatus::None,
-            MaxVelocity(50.),
+            MaxVelocity(100.),
             FuelTank {
                 current: 0,
                 max: 50,
