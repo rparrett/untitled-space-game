@@ -7,6 +7,7 @@ use crate::{
     warp_node::WarpNode,
     Credits, DespawnOnRestart, Fonts, FuelTank, GameState, Player,
 };
+use std::fmt::Write;
 
 pub struct UiPlugin;
 
@@ -219,11 +220,10 @@ fn update_commodity_inventory(
 ) {
     for inventory in query.iter() {
         for mut label in label_query.iter_mut() {
-            label.sections[0].value = inventory
-                .0
-                .iter()
-                .map(|(k, v)| format!("{:?} {}\n", k, v))
-                .collect::<String>()
+            label.sections[0].value = inventory.0.iter().fold(String::new(), |mut out, (k, v)| {
+                let _ = writeln!(out, "{:?} {}", k, v);
+                out
+            });
         }
     }
 }

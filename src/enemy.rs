@@ -111,9 +111,7 @@ fn move_enemy(
             .k_nearest_neighbour(transform.translation.truncate(), 2)
             .iter()
             .skip(1)
-            .map(|(l, _)| *l - transform.translation.truncate())
-            .filter(|l| l.length_squared() < 900.)
-            .next();
+            .map(|(l, _)| *l - transform.translation.truncate()).find(|l| l.length_squared() < 900.);
 
         let mut dir =
             (player.translation.truncate() - transform.translation.truncate()).normalize();

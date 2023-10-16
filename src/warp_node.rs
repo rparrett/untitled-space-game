@@ -5,8 +5,7 @@ use rand::{distributions::Uniform, thread_rng, Rng};
 
 use crate::{
     commodity::CommodityPrices, direction_indicator::DirectionIndicatorSettings, layer,
-    move_camera, scanner::Scanner, util, DespawnOnRestart, FuelTank, GameState, MovementSet,
-    Player,
+    scanner::Scanner, util, DespawnOnRestart, FuelTank, GameState, MovementSet, Player,
 };
 
 pub struct WarpNodePlugin;
@@ -88,7 +87,7 @@ fn spawn_nodes(
 
     let labels = ('A'..).take(num).map(|c| c.to_string());
     let prices = (0..num).map(|_| CommodityPrices::new_random());
-    let distances = rng.sample_iter(&dist_range).take(num as usize);
+    let distances = rng.sample_iter(&dist_range).take(num);
     let angles = util::random_circular_f32_distribution(num as u32, 80., 360.);
 
     for (angle, distance, label, price) in izip!(angles, distances, labels, prices) {
