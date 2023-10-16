@@ -188,7 +188,7 @@ fn spawn_player(
             MaxVelocity(100.),
             FuelTank {
                 current: 0,
-                max: 40,
+                max: 30,
             },
             Credits(0),
             BasicLaser {
