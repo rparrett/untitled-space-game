@@ -9,12 +9,10 @@ use crate::{
 pub struct DirectionIndicatorPlugin;
 impl Plugin for DirectionIndicatorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(
-            update
-                .in_set(OnUpdate(GameState::Playing))
-                .after(crate::movement),
+        app.add_systems(
+            Update,
+            (update.after(crate::movement), decorate).run_if(in_state(GameState::Playing)),
         );
-        app.add_system(decorate.in_set(OnUpdate(GameState::Playing)));
     }
 }
 

@@ -36,10 +36,11 @@ impl Plugin for EnemyPlugin {
             .insert_resource(RampUpTimer(Timer::from_seconds(30., TimerMode::Repeating)));
 
         app.add_systems(
-            (spawn_enemy, move_enemy, ramp_up, despawn).in_set(OnUpdate(GameState::Playing)),
+            Update,
+            (spawn_enemy, move_enemy, ramp_up, despawn).run_if(in_state(GameState::Playing)),
         );
 
-        app.add_system(reset_timers.in_schedule(OnExit(GameState::Warping)));
+        app.add_systems(OnExit(GameState::Warping), reset_timers);
     }
 }
 
@@ -111,7 +112,8 @@ fn move_enemy(
             .k_nearest_neighbour(transform.translation.truncate(), 2)
             .iter()
             .skip(1)
-            .map(|(l, _)| *l - transform.translation.truncate()).find(|l| l.length_squared() < 900.);
+            .map(|(l, _)| *l - transform.translation.truncate())
+            .find(|l| l.length_squared() < 900.);
 
         let mut dir =
             (player.translation.truncate() - transform.translation.truncate()).normalize();

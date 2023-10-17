@@ -13,13 +13,15 @@ impl Plugin for WarpNodePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(WarpAnimation::default());
 
-        app.add_system(spawn_nodes.in_schedule(OnEnter(GameState::Playing)));
+        app.add_systems(OnEnter(GameState::Playing), spawn_nodes);
         app.add_systems(
+            Update,
             (start_warp, end_warp, move_fade_sprite.after(MovementSet))
-                .in_set(OnUpdate(GameState::Playing)),
+                .run_if(in_state(GameState::Playing)),
         );
         app.add_systems(
-            (warp, move_fade_sprite.after(MovementSet)).in_set(OnUpdate(GameState::Warping)),
+            Update,
+            (warp, move_fade_sprite.after(MovementSet)).run_if(in_state(GameState::Warping)),
         );
     }
 }

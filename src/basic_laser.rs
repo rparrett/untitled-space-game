@@ -6,7 +6,10 @@ pub struct BasicLaserPlugin;
 
 impl Plugin for BasicLaserPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems((fire, collide, despawn).in_set(OnUpdate(GameState::Playing)));
+        app.add_systems(
+            Update,
+            (fire, collide, despawn).run_if(in_state(GameState::Playing)),
+        );
     }
 }
 

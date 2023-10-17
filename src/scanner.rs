@@ -10,8 +10,11 @@ pub struct ScannerPlugin;
 impl Plugin for ScannerPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Scanner>();
-        app.add_system(reset.in_schedule(OnExit(GameState::Warping)));
-        app.add_systems((proximity, update, unpause).in_set(OnUpdate(GameState::Playing)));
+        app.add_systems(OnExit(GameState::Warping), reset);
+        app.add_systems(
+            Update,
+            (proximity, update, unpause).run_if(in_state(GameState::Playing)),
+        );
     }
 }
 

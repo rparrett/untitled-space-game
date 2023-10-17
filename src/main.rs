@@ -29,33 +29,33 @@ mod util;
 mod warp_node;
 
 fn main() {
-    App::new()
-        .insert_resource(ClearColor(Color::BLACK))
-        .add_plugins(DefaultPlugins.set(AssetPlugin {
-            watch_for_changes: true,
-            ..default()
-        }))
+    let mut app = App::new();
+
+    app.insert_resource(ClearColor(Color::BLACK))
+        .add_plugins(DefaultPlugins)
         .add_state::<GameState>()
         .add_loading_state(
             LoadingState::new(GameState::Loading).continue_to_state(GameState::Playing),
         )
         .add_collection_to_loading_state::<_, Fonts>(GameState::Loading)
-        .add_plugin(InputManagerPlugin::<Action>::default())
-        .add_plugin(
+        .add_plugins(InputManagerPlugin::<Action>::default())
+        .add_plugins(
             AutomaticUpdate::<SpatialIndex>::new().with_spatial_ds(SpatialStructure::KDTree2),
         )
-        .add_plugin(StarfieldPlugin)
-        .add_plugin(BasicLaserPlugin)
-        .add_plugin(EnemyPlugin)
-        .add_plugin(FuelPlugin)
-        .add_plugin(DirectionIndicatorPlugin)
-        .add_plugin(CommodityPlugin)
-        .add_plugin(ScannerPlugin)
-        .add_plugin(WarpNodePlugin)
-        .add_plugin(UiPlugin)
-        .add_system(spawn_player.in_schedule(OnExit(GameState::Loading)))
-        .add_system(spawn_level.in_schedule(OnEnter(GameState::Playing)))
+        .add_plugins(StarfieldPlugin)
+        .add_plugins(BasicLaserPlugin)
+        .add_plugins(EnemyPlugin)
+        .add_plugins(FuelPlugin)
+        .add_plugins(DirectionIndicatorPlugin)
+        .add_plugins(CommodityPlugin)
+        .add_plugins(ScannerPlugin)
+        .add_plugins(WarpNodePlugin)
+        .add_plugins(UiPlugin);
+
+    app.add_systems(OnExit(GameState::Loading), spawn_player)
+        .add_systems(OnEnter(GameState::Playing), spawn_level)
         .add_systems(
+            Update,
             (
                 player_input,
                 thruster.before(acceleration),
@@ -65,16 +65,18 @@ fn main() {
                 movement,
                 move_camera.after(movement),
             )
-                .in_set(OnUpdate(GameState::Playing))
+                .run_if(in_state(GameState::Playing))
                 .in_set(MovementSet),
         )
         .add_systems(
+            Update,
             (warp_movement, move_camera.after(warp_movement))
-                .in_set(OnUpdate(GameState::Warping))
+                .run_if(in_state(GameState::Warping))
                 .in_set(MovementSet),
         )
-        .add_systems((cleanup, sell, reset_player).in_schedule(OnExit(GameState::Warping)))
-        .run();
+        .add_systems(OnExit(GameState::Warping), (cleanup, sell, reset_player));
+
+    app.run();
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone, SystemSet)]
@@ -95,7 +97,7 @@ struct Fonts {
 }
 
 // This is the list of "things in the game I want to be able to do based on input"
-#[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug)]
+#[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug, Reflect)]
 enum Action {
     TurnLeft,
     TurnRight,

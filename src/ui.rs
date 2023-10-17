@@ -14,9 +14,10 @@ pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(WarpNodeDisplayOrder::default());
-        app.add_system(setup.in_schedule(OnEnter(GameState::Playing)));
 
+        app.add_systems(OnEnter(GameState::Playing), setup);
         app.add_systems(
+            Update,
             (
                 update_fuel,
                 update_credits,
@@ -25,7 +26,7 @@ impl Plugin for UiPlugin {
                 track_warp_nodes,
                 update_warp_nodes,
             )
-                .in_set(OnUpdate(GameState::Playing)),
+                .run_if(in_state(GameState::Playing)),
         );
     }
 }
@@ -50,7 +51,8 @@ fn setup(mut commands: Commands, fonts: Res<Fonts>) {
             NodeBundle {
                 style: Style {
                     flex_direction: FlexDirection::Column,
-                    size: Size::new(Val::Percent(100.), Val::Percent(100.)),
+                    width: Val::Percent(100.),
+                    height: Val::Percent(100.),
                     align_items: AlignItems::FlexEnd,
                     ..default()
                 },

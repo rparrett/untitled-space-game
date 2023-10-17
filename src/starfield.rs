@@ -1,6 +1,6 @@
 use bevy::{
     prelude::*,
-    reflect::TypeUuid,
+    reflect::{TypePath, TypeUuid},
     render::render_resource::{AsBindGroup, ShaderRef},
     sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle},
     window::PrimaryWindow,
@@ -15,10 +15,10 @@ struct Starfield;
 
 impl Plugin for StarfieldPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(Material2dPlugin::<StarfieldMaterial>::default());
-        app.add_system(setup.in_schedule(OnEnter(GameState::Playing)));
-        app.add_system(move_starfield.in_set(OnUpdate(GameState::Playing)));
-        app.add_system(warp_animation.in_set(OnUpdate(GameState::Warping)));
+        app.add_plugins(Material2dPlugin::<StarfieldMaterial>::default());
+        app.add_systems(OnEnter(GameState::Playing), setup);
+        app.add_systems(Update, move_starfield.run_if(in_state(GameState::Playing)));
+        app.add_systems(Update, warp_animation.run_if(in_state(GameState::Warping)));
     }
 }
 
@@ -86,7 +86,7 @@ impl Material2d for StarfieldMaterial {
     }
 }
 
-#[derive(AsBindGroup, TypeUuid, Debug, Default, Clone)]
+#[derive(AsBindGroup, TypeUuid, TypePath, Debug, Default, Clone)]
 #[uuid = "721097c0-7368-453f-a95f-0731d6724689"]
 pub struct StarfieldMaterial {
     #[uniform(0)]

@@ -8,12 +8,16 @@ pub struct FuelPlugin;
 impl Plugin for FuelPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<SpawnFuelPelletEvent>();
-        app.add_systems((movement, spawn).in_set(OnUpdate(GameState::Playing)));
+        app.add_systems(
+            Update,
+            (movement, spawn).run_if(in_state(GameState::Playing)),
+        );
     }
 }
 
 #[derive(Component)]
 struct FuelPellet;
+#[derive(Event)]
 pub struct SpawnFuelPelletEvent {
     pub location: Vec2,
 }
