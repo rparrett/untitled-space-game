@@ -80,15 +80,12 @@ fn warp_animation(
     starfield.translation.y = player_transform.translation.y;
 }
 
-/// The Material trait is very configurable, but comes with sensible defaults for all methods.
-/// You only need to implement functions for features that need non-default behavior. See the Material api docs for details!
 impl Material2d for StarfieldMaterial {
     fn fragment_shader() -> ShaderRef {
         "shaders/starfield.wgsl".into()
     }
 }
 
-// This is the struct that will be passed to your shader
 #[derive(AsBindGroup, TypeUuid, Debug, Default, Clone)]
 #[uuid = "721097c0-7368-453f-a95f-0731d6724689"]
 pub struct StarfieldMaterial {

@@ -233,7 +233,6 @@ fn spawn_level(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    println!("spawn_level");
     let planet = commands
         .spawn((
             ColorMesh2dBundle {
@@ -296,7 +295,6 @@ fn reset_player(
 }
 
 fn cleanup(mut commands: Commands, query: Query<Entity, With<DespawnOnRestart>>) {
-    println!("cleanup");
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();
     }

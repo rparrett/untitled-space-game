@@ -250,62 +250,55 @@ fn update_warp_nodes(
         return;
     }
 
-    let style_good = TextStyle {
+    let text_style = |color| TextStyle {
         font: fonts.main.clone(),
         font_size: 20.,
-        color: Color::GREEN,
+        color,
     };
-    let style_bad = TextStyle {
-        font: fonts.main.clone(),
-        font_size: 20.,
-        color: Color::RED,
-    };
-    let style_label = TextStyle {
-        font: fonts.main.clone(),
-        font_size: 20.,
-        color: Color::ORANGE,
-    };
-    let style_neutral = TextStyle {
-        font: fonts.main.clone(),
-        font_size: 20.,
-        color: Color::BEIGE,
-    };
+
+    let style_good = text_style(Color::GREEN);
+    let style_bad = text_style(Color::RED);
+    let style_label = text_style(Color::ORANGE);
+    let style_neutral = text_style(Color::BEIGE);
 
     for mut text in text_query.iter_mut() {
         let mut sections = vec![];
 
         for entity in &display_order.0 {
-            if let Ok((prices, settings)) = query.get(*entity) {
-                sections.push(TextSection::new("Node ".to_string(), style_label.clone()));
+            let Ok((prices, settings)) = query.get(*entity) else {
+                continue;
+            };
+
+            sections.push(TextSection::new("Node ".to_string(), style_label.clone()));
+            sections.push(TextSection::new(
+                settings
+                    .label
+                    .as_ref()
+                    .map_or_else(|| "?".to_string(), |l| l.clone()),
+                style_label.clone(),
+            ));
+            sections.push(TextSection::new("\n".to_string(), style_label.clone()));
+
+            for (kind, price) in prices.0.iter() {
+                let (price_style, sign) = if *price < 1.0 {
+                    (style_bad.clone(), "-")
+                } else {
+                    (style_good.clone(), "+")
+                };
+
                 sections.push(TextSection::new(
-                    settings
-                        .label
-                        .as_ref()
-                        .map_or_else(|| "?".to_string(), |l| l.clone()),
-                    style_label.clone(),
+                    format!("{:?} ", kind),
+                    style_neutral.clone(),
                 ));
-                sections.push(TextSection::new("\n".to_string(), style_label.clone()));
-
-                for (kind, price) in prices.0.iter() {
-                    let (price_style, sign) = if *price < 1.0 {
-                        (style_bad.clone(), "-")
-                    } else {
-                        (style_good.clone(), "+")
-                    };
-
-                    sections.push(TextSection::new(
-                        format!("{:?} ", kind),
-                        style_neutral.clone(),
-                    ));
-                    sections.push(TextSection::new(
-                        format!("{}{:.0}%\n", sign, (1. - price).abs() * 100.),
-                        price_style,
-                    ));
-                }
-
-                sections.push(TextSection::new("\n".to_string(), style_neutral.clone()));
+                sections.push(TextSection::new(
+                    format!("{}{:.0}%\n", sign, (1. - price).abs() * 100.),
+                    price_style,
+                ));
             }
+
+            sections.push(TextSection::new("\n".to_string(), style_neutral.clone()));
         }
+
         text.sections = sections;
     }
 }

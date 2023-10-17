@@ -82,14 +82,7 @@ pub fn chevron(width: f32, height: f32, thickness: f32) -> Mesh {
         [-half_width, half_height - thickness, 0.],
     ];
 
-    let normals = vec![
-        [0.0, 0.0, 1.0],
-        [0.0, 0.0, 1.0],
-        [0.0, 0.0, 1.0],
-        [0.0, 0.0, 1.0],
-        [0.0, 0.0, 1.0],
-        [0.0, 0.0, 1.0],
-    ];
+    let normals = vec![[0.0, 0.0, 1.0]; positions.len()];
 
     let mut uvs = Vec::with_capacity(positions.len());
 
@@ -142,7 +135,6 @@ pub fn random_u32_subdivisions(num: u32, total: u32, min: u32) -> Vec<u32> {
 /// The absolute difference between values is at least `min_gap`.
 ///
 /// That minimum gap also "wraps" around from the last value to the first.
-
 pub fn random_circular_f32_distribution(num: u32, min_gap: f32, max: f32) -> Vec<f32> {
     debug_assert!(num as f32 * min_gap < max);
 

@@ -99,60 +99,62 @@ fn update(
     let on_screen_rect = Vec2::new(640., 360.);
 
     for (indicator, mut transform, mut visibility, children) in query.iter_mut() {
-        if let Ok(target_transform) = transform_query.get(indicator.target) {
-            let diff = target_transform.translation.truncate() - player.translation.truncate();
+        let Ok(target_transform) = transform_query.get(indicator.target) else {
+            continue;
+        };
 
-            // TODO this should be a proper collision with the object geometry and the screen.
-            if !util::point_in_rect(diff, -on_screen_rect, on_screen_rect) {
-                let projection =
-                    util::project_onto_bounding_rectangle(diff, -indicator_rect, indicator_rect)
-                        .unwrap();
+        let diff = target_transform.translation.truncate() - player.translation.truncate();
 
-                let pos = projection.0 + player.translation.truncate();
+        // TODO this should be a proper collision with the object geometry and the screen.
+        if util::point_in_rect(diff, -on_screen_rect, on_screen_rect) {
+            *visibility = Visibility::Hidden;
+            continue;
+        }
 
-                transform.translation.x = pos.x;
-                transform.translation.y = pos.y;
+        let projection =
+            util::project_onto_bounding_rectangle(diff, -indicator_rect, indicator_rect).unwrap();
 
-                let theta = diff.y.atan2(diff.x);
-                let theta_label = theta + std::f32::consts::PI;
-                let sin_cos = theta_label.sin_cos();
+        let pos = projection.0 + player.translation.truncate();
 
-                let offset = match (projection.1, indicator.settings.label.as_ref()) {
-                    (Edge::Top, Some(_)) => Vec2::new(0., -6.),
-                    (_, Some(_)) => Vec2::new(0., 6.),
-                    _ => Vec2::ZERO,
-                };
+        transform.translation.x = pos.x;
+        transform.translation.y = pos.y;
 
-                for child in children {
-                    if let Ok(mut label_transform) = label_query.get_mut(*child) {
-                        let pos = Vec2::new(sin_cos.1, sin_cos.0) * 30. + offset;
+        let theta = diff.y.atan2(diff.x);
+        let theta_label = theta + std::f32::consts::PI;
+        let sin_cos = theta_label.sin_cos();
 
-                        label_transform.translation.x = pos.x;
-                        label_transform.translation.y = pos.y;
+        let offset = match (projection.1, indicator.settings.label.as_ref()) {
+            (Edge::Top, Some(_)) => Vec2::new(0., -6.),
+            (_, Some(_)) => Vec2::new(0., 6.),
+            _ => Vec2::ZERO,
+        };
 
-                        continue;
-                    }
+        for child in children {
+            if let Ok(mut label_transform) = label_query.get_mut(*child) {
+                let pos = Vec2::new(sin_cos.1, sin_cos.0) * 30. + offset;
 
-                    if let Ok((mut label, mut label_transform)) = distance_query.get_mut(*child) {
-                        let pos = Vec2::new(sin_cos.1, sin_cos.0) * 30. + -offset;
+                label_transform.translation.x = pos.x;
+                label_transform.translation.y = pos.y;
 
-                        label_transform.translation.x = pos.x;
-                        label_transform.translation.y = pos.y;
+                continue;
+            }
 
-                        label.sections[0].value = format!("{:.1}Mm", diff.length() / 1000.);
-                    }
+            if let Ok((mut label, mut label_transform)) = distance_query.get_mut(*child) {
+                let pos = Vec2::new(sin_cos.1, sin_cos.0) * 30. + -offset;
 
-                    if let Ok(mut arrow) = arrow_query.get_mut(*child) {
-                        arrow.rotation = Quat::from_rotation_z(theta + std::f32::consts::FRAC_PI_2);
-                        continue;
-                    }
-                }
+                label_transform.translation.x = pos.x;
+                label_transform.translation.y = pos.y;
 
-                *visibility = Visibility::Visible;
-            } else {
-                *visibility = Visibility::Hidden;
+                label.sections[0].value = format!("{:.1}Mm", diff.length() / 1000.);
+            }
+
+            if let Ok(mut arrow) = arrow_query.get_mut(*child) {
+                arrow.rotation = Quat::from_rotation_z(theta + std::f32::consts::FRAC_PI_2);
+                continue;
             }
         }
+
+        *visibility = Visibility::Visible;
     }
 }
 
