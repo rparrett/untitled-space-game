@@ -67,7 +67,7 @@ fn movement(
         // TODO Player should have a PickupRange
         // TODO Maybe try applying velocity directly proportional to square distance
         if dist <= 60. {
-            acceleration.0 = diff.normalize() * 100.;
+            acceleration.0 = diff.normalize() * 120.;
         } else {
             acceleration.0 = Vec2::ZERO;
         }
